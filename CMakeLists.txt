@@ -11,12 +11,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Include path
+include_directories(${CMAKE_SOURCE_DIR}/external/eigen)
 include_directories(include)
 
 # Core library sources
 set(SOURCE_FILES
     src/chance_of_jump.cpp
     src/hamiltonian.cpp
+    src/stochastic_schrodinger.cpp
 )
 
 # Header files (optional: for IDEs and clarity)
@@ -24,6 +26,7 @@ set(HEADER_FILES
     include/constants.hpp
     include/chance_of_jump.hpp
     include/hamiltonian.hpp
+    include/stochastic_schrodinger.hpp
 )
 
 # Create static library

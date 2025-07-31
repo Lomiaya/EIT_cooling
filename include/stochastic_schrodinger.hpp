@@ -1,28 +1,37 @@
-// stochastic_schrodinger.hpp
 #ifndef STOCHASTIC_SCHRODINGER_HPP
 #define STOCHASTIC_SCHRODINGER_HPP
 
+#include <Eigen/Dense>
 #include <complex>
 #include <vector>
 #include <random>
-#include <array>
+#include <tuple>
 
 namespace stochastic_schrodinger {
 
 using Complex = std::complex<double>;
-using Matrix = std::vector<std::vector<Complex>>;
-using Vector = std::vector<Complex>;
+using MatrixXc = Eigen::MatrixXcd;
+using VectorXc = Eigen::VectorXcd;
 
-// Matrix exponential of -i*H*dt - Mu*dt
-Matrix expmt(const Matrix& H, const Matrix& Mu, double dt);
+// Matrix exponential for small dt using Eigen's matrix exponential (requires unsupported/Eigen/MatrixFunctions)
+MatrixXc expmt(const MatrixXc& M, const MatrixXc& Mu, double dt);
 
-// Time evolution of quantum state with possible jump
-std::tuple<Vector, int, Matrix> solve(
-    const std::vector<double>& time,
-    const Vector& psi0,
-    const Matrix& Ht,
-    const std::vector<Matrix>& Lt,
+// Single time step of the stochastic evolution
+std::tuple<VectorXc, int> step(
+    const VectorXc& psi,
+    int scatter_count,
+    const std::vector<MatrixXc>& Lt,
+    const MatrixXc& expH,
     std::mt19937& rng);
+
+// Solve the stochastic Schrodinger equation over given time points
+// Returns final psi, total jumps count, and expH matrix used
+std::tuple<VectorXc, int, MatrixXc> solve(
+    const std::vector<double>& time,
+    const VectorXc& psi0,
+    const MatrixXc& Ht,
+    const std::vector<MatrixXc>& Lt,
+    unsigned int seed);
 
 } // namespace stochastic_schrodinger
 
