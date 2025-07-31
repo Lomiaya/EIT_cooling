@@ -2,15 +2,15 @@
 #include <unsupported/Eigen/MatrixFunctions> // for matrix exponential
 #include <numeric>
 #include <iostream>
+#include <random>
 
 namespace stochastic_schrodinger {
 
-// i = imaginary unit
+// imaginary unit
 static const Complex I(0,1);
 
 MatrixXc expmt(const MatrixXc& M, const MatrixXc& Mu, double dt) {
-    MatrixXc A = -I * M * dt - Mu * dt;
-    return A.exp();
+    return (-I * M * dt - Mu * dt).exp();
 }
 
 std::tuple<VectorXc, int> step(
@@ -18,42 +18,42 @@ std::tuple<VectorXc, int> step(
     int scatter_count,
     const std::vector<MatrixXc>& Lt,
     const MatrixXc& expH,
-    const double dt,
+    double dt,
     std::mt19937& rng)
 {
-    // non-stochastic evolution
+    // Non-stochastic evolution step
     VectorXc psi = expH * psi_in;
-    psi /= psi.norm();
+    psi.normalize();
 
-    // calculate jump probabilities
+    // Calculate jump probabilities
     std::vector<double> probs;
+    probs.reserve(Lt.size());
+    double sum_probs = 0.0;
+
     for (const auto& Li : Lt) {
         VectorXc temp = Li * psi;
-        double p = (temp.adjoint() * temp)(0,0).real() * dt;
+        double p = temp.squaredNorm() * dt;
         probs.push_back(p);
+        sum_probs += p;
     }
 
-    // probability of no jump
-    double sum_probs = std::accumulate(probs.begin(), probs.end(), 0.0);
+    // Probability of no jump
     double p_no_jump = std::max(0.0, 1.0 - sum_probs);
 
-    // create discrete distribution including no jump
-    std::discrete_distribution<int> dist({probs.begin(), probs.end()});
-    // add no jump index at end:
-    std::vector<double> extended_probs = probs;
-    extended_probs.push_back(p_no_jump);
-    std::discrete_distribution<int> dist_full(extended_probs.begin(), extended_probs.end());
+    // Prepare probabilities vector including no jump
+    probs.push_back(p_no_jump);
 
-    int idx = dist_full(rng);
+    // Create discrete distribution once with all probabilities (jumps + no jump)
+    std::discrete_distribution<int> dist(probs.begin(), probs.end());
+    int idx = dist(rng);
 
     if (idx < static_cast<int>(Lt.size())) {
-        // jump
+        // jump occurs
         psi = Lt[idx] * psi;
-        scatter_count += 1;
+        psi.normalize();
+        ++scatter_count;
     }
-    // else no jump
-
-    psi /= psi.norm();
+    // else no jump, psi already normalized
 
     return {psi, scatter_count};
 }
@@ -70,7 +70,7 @@ std::tuple<VectorXc, int, MatrixXc> solve(
     // Compute sum_LdaggerL = sum Li^dagger * Li
     MatrixXc sum_LdaggerL = MatrixXc::Zero(Ht.rows(), Ht.cols());
     for (const auto& Li : Lt) {
-        sum_LdaggerL += Li.adjoint() * Li;
+        sum_LdaggerL.noalias() += Li.adjoint() * Li;
     }
 
     double dt = time[1] - time[0];
@@ -79,7 +79,7 @@ std::tuple<VectorXc, int, MatrixXc> solve(
     VectorXc psi = psi0;
     int scatter_count = 0;
 
-    for (size_t i = 0; i < time.size() - 1; ++i) {
+    for (size_t i = 0; i + 1 < time.size(); ++i) {
         std::tie(psi, scatter_count) = step(psi, scatter_count, Lt, expH, dt, rng);
     }
 

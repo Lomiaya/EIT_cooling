@@ -77,8 +77,8 @@ int main() {
         std::vector<MatrixXcd> L = {L1, L2};
 
         // Prepare time vector (0 to 10000 us, 200001 points)
-        int num_points = 200001;
-        VectorXd t = VectorXd::LinSpaced(num_points, 0.0, 10000e-6);
+        int num_points = 20001;
+        VectorXd t = VectorXd::LinSpaced(num_points, 0.0, 1000e-6);
         double dt = t(1) - t(0);
         std::vector<double> t_double_vector(t.data(), t.data() + t.size());
         std::cout << "dt: " << dt << "\n";
