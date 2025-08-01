@@ -40,7 +40,7 @@ std::vector<double> calculate_chance_of_jump(
     const Vec3& B_direction,
     const std::array<int, 3>& start,
     const std::array<int, 3>& end,
-    int num_samples = 5);
+    int num_samples = 500);
 
 } // namespace chance_of_jump
 

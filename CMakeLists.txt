@@ -19,6 +19,7 @@ set(SOURCE_FILES
     src/chance_of_jump.cpp
     src/hamiltonian.cpp
     src/stochastic_schrodinger.cpp
+    src/stochastic_schrodinger_spin_motion.cpp
     src/define_params.cpp
     src/atomic_states.cpp
 )
@@ -29,6 +30,7 @@ set(HEADER_FILES
     include/chance_of_jump.hpp
     include/hamiltonian.hpp
     include/stochastic_schrodinger.hpp
+    include/stochastic_schrodinger_spin_motion.hpp
     include/define_params.hpp
     include/atomic_states.hpp
 )
