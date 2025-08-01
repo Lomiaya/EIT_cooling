@@ -5,9 +5,6 @@
 #include <cmath>
 #include <numeric>
 
-//
-#include <iostream>
-
 namespace ss_spin {
 
 MatrixXc brute_force(const std::vector<std::pair<MatrixXc,double>>& Hi_omegas,
@@ -130,6 +127,7 @@ std::vector<std::tuple<int, int, double>> build_L(
     const int ng = static_cast<int>(G[0].cols());
 
     int full_size = num_nonzero * (n_x * n_x) * (n_z * n_z * n_z);
+    int full_full_size = np * ne * ng * (n_x * n_x) * (n_z * n_z * n_z);
 
     std::vector<std::tuple<int, int, double>> Lt;
     Lt.reserve(full_size); // reserve space, optionally use push_back if sparse
@@ -142,7 +140,7 @@ std::vector<std::tuple<int, int, double>> build_L(
         return std::clamp(z, 0, n_z - 1);
     };
 
-    for (int i = 0; i < full_size; ++i) {
+    for (int i = 0; i < full_full_size; ++i) {
         // Unpack i to np_, ne_, ng_, nxf, nyf, nzf, nxi, nzi
         int rem = i;
         int nzi = rem % n_z; rem /= n_z;
@@ -154,7 +152,7 @@ std::vector<std::tuple<int, int, double>> build_L(
         int ne_ = rem % ne;  rem /= ne;
         int np_ = rem % np;
 
-        if (G[np](ne_, ng_) == 0.0) continue;
+        if (G[np_](ne_, ng_) == 0.0) continue;
 
         int excited_state = from_tuple_to_number(ne_ + ng, nxi, nzi);
         int ground_state = from_tuple_to_number(ng_, nxf, bound(nzf + nyf - nzi));
@@ -196,7 +194,7 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
 
     // Compute probabilities
     std::vector<double> probs;
-    probs.reserve(Lt.size());
+    probs.reserve(Lt.size()+1);
 
     for (const auto& [i, j, val] : Lt) {
         Complex Li_psi = val * psi(j);

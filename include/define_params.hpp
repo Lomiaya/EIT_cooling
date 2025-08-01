@@ -5,22 +5,22 @@
 #include <array>
 #include <complex>
 #include <vector>
+#include <Eigen/Dense>
 
 namespace define_params {
 
 using Complex = std::complex<double>;
-using ComplexVec = std::vector<Complex>;
-using ComplexMat = std::vector<std::vector<Complex>>;
-using DoubleVec = std::vector<double>;
-using DoubleMat = std::vector<std::vector<double>>;
-using IntVec = std::vector<int>;
+using ComplexVec = Eigen::VectorXcd;
+using ComplexMat = Eigen::MatrixXcd;
+using DoubleVec = Eigen::VectorXd;
+using DoubleMat = Eigen::MatrixXd;
 
 struct Params {
     int n_beams;
 
-    ComplexMat D;  // [n_scans_D][n_beams]
+    DoubleMat D;  // [n_scans_D][n_beams]
     DoubleMat I;   // [n_scans_I][n_beams]
-    DoubleMat s;   // [n_beams][3]
+    ComplexMat s;   // [n_beams][3]
     DoubleMat k;   // [n_beams][3]
 
     double omega_x;

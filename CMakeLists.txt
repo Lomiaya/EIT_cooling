@@ -42,6 +42,10 @@ add_library(quantum_core STATIC ${SOURCE_FILES} ${HEADER_FILES})
 add_executable(fano_test examples/fano_test.cpp)
 target_link_libraries(fano_test PRIVATE quantum_core)
 
+# Example executable: simulation
+add_executable(simulation examples/simulation.cpp)
+target_link_libraries(simulation PRIVATE quantum_core)
+
 # Optional: enable warnings
 # if (MSVC)
 #     target_compile_options(quantum_core PRIVATE /W4 /permissive-)
