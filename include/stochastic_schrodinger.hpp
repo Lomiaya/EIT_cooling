@@ -1,3 +1,4 @@
+// stochastic_schrodinger.hpp
 #ifndef STOCHASTIC_SCHRODINGER_HPP
 #define STOCHASTIC_SCHRODINGER_HPP
 

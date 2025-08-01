@@ -61,6 +61,7 @@
         "xtr1common": "cpp",
         "xutility": "cpp",
         "matrixfunctions": "cpp",
-        "dense": "cpp"
+        "dense": "cpp",
+        "tensor": "cpp"
     }
 }
