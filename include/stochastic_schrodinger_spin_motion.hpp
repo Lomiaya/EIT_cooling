@@ -50,7 +50,7 @@ using StateCarry = std::tuple<VectorXc,int,int,VecD,VecD, // psi, scatter_count,
                               std::vector<std::tuple<int, int, double>>, // Lt entries: i,j,val
                               std::vector<std::pair<MatrixXc,double>>, // Ht
                               MatrixXc, double, // K, G_tot
-                              int, int, int, // sizes: n_s,n_x,n_z
+                              int, int, int, int, // sizes: n_g,n_s,n_x,n_z
                               std::mt19937>; // rng seed
 std::pair<StateCarry, void*> step(const StateCarry& carry,
                                   const std::pair<double,double>& t_pair);
@@ -61,7 +61,7 @@ solve(const VecD& time,
       const VectorXc& psi0,
       const std::vector<std::pair<MatrixXc,double>>& Ht,
       const std::vector<std::tuple<int, int, double>>& Lt,
-      const double G_tot,
+      const double G_tot, int n_g,
       int n_s, int n_x, int n_z,
       const std::vector<unsigned int>& keys);
 

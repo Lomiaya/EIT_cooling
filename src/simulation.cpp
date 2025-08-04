@@ -121,7 +121,7 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             for (unsigned int i = 0; i < 10; ++i) keys[i] = i + 10 * (I_index * Ds.rows() + D_index);
 
             auto [psi_final, jumps, nx_over_t, nz_over_t] =
-                ss_spin::solve(t, psi0, H, L, def_states.G_tot, n_states, params.n_x_max, params.n_z_max, keys);
+                ss_spin::solve(t, psi0, H, L, def_states.G_tot, def_states.n_ground_states, n_states, params.n_x_max, params.n_z_max, keys);
 
             cout << "3. Function returned!" << endl;
 

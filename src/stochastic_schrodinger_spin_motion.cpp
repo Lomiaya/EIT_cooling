@@ -187,7 +187,7 @@ std::vector<std::tuple<int, int, double>> build_L(
 
 std::pair<StateCarry, void*> step(const StateCarry& carry,
                                   const std::pair<double, double>& t_pair) {
-    auto [psi, scatter_count, ii, nx, nz, Lt, Ht, K, G_tot, n_s, n_x, n_z, rng] = carry;
+    auto [psi, scatter_count, ii, nx, nz, Lt, Ht, K, G_tot, n_g, n_s, n_x, n_z, rng] = carry;
     double t0 = t_pair.first;
     double t1 = t_pair.second;
     double dt = t1 - t0;
@@ -197,26 +197,27 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
     psi = expH * psi;
     psi.normalize();
 
-    // Compute probabilities
-    std::vector<double> probs;
-    probs.reserve(Lt.size()+1);
+    // double jump_prob = (psi.adjoint() * K * psi)[0,0].real() * dt;
+    double jump_prob = psi.tail(psi.size() - n_g * n_x * n_z).squaredNorm() * G_tot * dt;
+    std::vector<double> probs_jump = {jump_prob, 1 - jump_prob};
+    std::discrete_distribution<> dist_jump(probs_jump.begin(), probs_jump.end());
+    int idx_jump = dist_jump(rng);
 
-    for (const auto& [i, j, val] : Lt) {
-        Complex Li_psi = val * psi(j);
-        Complex Li_dag_Li_psi_j = std::conj(val) * Li_psi;
-        Complex dot = std::conj(psi(j)) * Li_dag_Li_psi_j;
-        probs.push_back(dt * dot.real());
-    }
+    if (idx_jump == 0) {
+        // Compute probabilities
+        std::vector<double> probs;
+        probs.reserve(Lt.size());
 
-    // Choose whether a jump occurs
-    double p_sum = std::accumulate(probs.begin(), probs.end(), 0.0);
-    probs.push_back(1.0 - p_sum);  // no-jump option
+        for (const auto& [i, j, val] : Lt) {
+            Complex Li_psi = val * psi(j);
+            Complex Li_dag_Li_psi_j = std::conj(val) * Li_psi;
+            Complex dot = std::conj(psi(j)) * Li_dag_Li_psi_j;
+            probs.push_back(dt * dot.real());
+        }
 
-    std::discrete_distribution<> dist(probs.begin(), probs.end());
-    int idx = dist(rng);
+        std::discrete_distribution<> dist(probs.begin(), probs.end());
+        int idx = dist(rng);
 
-    // Apply jump or not
-    if (idx < static_cast<int>(Lt.size())) {
         auto [i, j, val] = Lt[idx];
         VectorXc psi_post = VectorXc::Zero(psi.size());
         psi_post(i) = val * psi(j);
@@ -233,7 +234,7 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
     ii += 1;
 
     StateCarry new_state = std::make_tuple(psi, scatter_count, ii, nx, nz,
-                                           Lt, Ht, K, G_tot, n_s, n_x, n_z, std::move(rng));
+                                           Lt, Ht, K, G_tot, n_g, n_s, n_x, n_z, std::move(rng));
     return {new_state, nullptr};
 }
 
@@ -242,7 +243,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     const VectorXc& psi0,
     const std::vector<std::pair<MatrixXc, double>>& Ht,
     const std::vector<std::tuple<int, int, double>>& Lt,
-    const double G_tot,
+    const double G_tot, int n_g,
     int n_s, int n_x, int n_z,
     const std::vector<unsigned int>& keys)
 {
@@ -292,7 +293,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
                 Ht,
                 K,
                 G_tot,
-                n_s, n_x, n_z,
+                n_g, n_s, n_x, n_z,
                 rng
             );
 
@@ -300,7 +301,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
                 state = step(state, t_pair).first;
             }
 
-            auto& [final_psi, scatter_count, ii, final_nx, final_nz, _, __, ___, ____, _____, ______, _______, ________] = state;
+            auto& [final_psi, scatter_count, ii, final_nx, final_nz, _, __, ___, ____, _____, ______, _______, ________, _________] = state;
             local_final_psis.push_back(final_psi);
             local_jumps.push_back(scatter_count);
             local_nx.push_back(final_nx);
