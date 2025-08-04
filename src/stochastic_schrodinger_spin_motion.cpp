@@ -6,6 +6,9 @@
 #include <numeric>
 #include <omp.h>
 
+//
+// #include <iostream>
+
 namespace ss_spin {
 
 MatrixXc brute_force(const std::vector<std::pair<MatrixXc,double>>& Hi_omegas,
@@ -127,18 +130,17 @@ std::vector<std::tuple<int, int, double>> build_L(
     const int ne = static_cast<int>(G[0].rows());
     const int ng = static_cast<int>(G[0].cols());
 
-    int full_size = num_nonzero * (n_x * n_x) * (n_z * n_z * n_z);
-    int full_full_size = np * ne * ng * (n_x * n_x) * (n_z * n_z * n_z);
+    int full_size = num_nonzero * (n_x * n_x * n_x) * (n_z * n_z);
+    int full_full_size = np * ne * ng * (n_x * n_x * n_x) * (n_z * n_z);
 
     std::vector<std::tuple<int, int, double>> Lt;
-    Lt.reserve(full_size); // reserve space, optionally use push_back if sparse
 
     auto from_tuple_to_number = [&](int s, int x, int z) {
         return (s * n_x + x) * n_z + z;
     };
 
     auto bound = [&](int z) {
-        return std::clamp(z, 0, n_z - 1);
+        return std::clamp(z, 0, n_x - 1);
     };
 
     for (int i = 0; i < full_full_size; ++i) {
@@ -156,9 +158,9 @@ std::vector<std::tuple<int, int, double>> build_L(
         if (G[np_](ne_, ng_) == 0.0) continue;
 
         int excited_state = from_tuple_to_number(ne_ + ng, nxi, nzi);
-        int ground_state = from_tuple_to_number(ng_, nxf, bound(nzf + nyf - nzi));
+        int ground_state = from_tuple_to_number(ng_, bound(nxf + nyf - nxi), nzf);
 
-        std::array<int, 3> start = {nxi, nzi, nzi};
+        std::array<int, 3> start = {nxi, nxi, nzi};
         std::array<int, 3> end   = {nxf, nyf, nzf};
 
         std::vector<double> chance = chance_of_jump::calculate_chance_of_jump(
@@ -169,10 +171,12 @@ std::vector<std::tuple<int, int, double>> build_L(
 
         double weighted_sum = 0.0;
         for (double val : chance) {
-            weighted_sum += std::abs(val) * G[np_](ne_, ng_);
+            weighted_sum += std::abs(val);
         }
 
         double average = weighted_sum / static_cast<double>(chance.size());
+        if (average <= 1e-3) continue;
+        average *= G[np_](ne_, ng_);
         double chance_of_jump = std::sqrt(average);
 
         Lt.emplace_back(ground_state, excited_state, chance_of_jump);
@@ -183,7 +187,7 @@ std::vector<std::tuple<int, int, double>> build_L(
 
 std::pair<StateCarry, void*> step(const StateCarry& carry,
                                   const std::pair<double, double>& t_pair) {
-    auto [psi, scatter_count, ii, nx, nz, Lt, Ht, K, n_s, n_x, n_z, rng] = carry;
+    auto [psi, scatter_count, ii, nx, nz, Lt, Ht, K, G_tot, n_s, n_x, n_z, rng] = carry;
     double t0 = t_pair.first;
     double t1 = t_pair.second;
     double dt = t1 - t0;
@@ -229,7 +233,7 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
     ii += 1;
 
     StateCarry new_state = std::make_tuple(psi, scatter_count, ii, nx, nz,
-                                           Lt, Ht, K, n_s, n_x, n_z, std::move(rng));
+                                           Lt, Ht, K, G_tot, n_s, n_x, n_z, std::move(rng));
     return {new_state, nullptr};
 }
 
@@ -238,6 +242,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     const VectorXc& psi0,
     const std::vector<std::pair<MatrixXc, double>>& Ht,
     const std::vector<std::tuple<int, int, double>>& Lt,
+    const double G_tot,
     int n_s, int n_x, int n_z,
     const std::vector<unsigned int>& keys)
 {
@@ -286,6 +291,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
                 Lt,
                 Ht,
                 K,
+                G_tot,
                 n_s, n_x, n_z,
                 rng
             );
@@ -294,7 +300,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
                 state = step(state, t_pair).first;
             }
 
-            auto& [final_psi, scatter_count, ii, final_nx, final_nz, _, __, ___, ____, _____, ______, _______] = state;
+            auto& [final_psi, scatter_count, ii, final_nx, final_nz, _, __, ___, ____, _____, ______, _______, ________] = state;
             local_final_psis.push_back(final_psi);
             local_jumps.push_back(scatter_count);
             local_nx.push_back(final_nx);

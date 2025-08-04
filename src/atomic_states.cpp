@@ -13,7 +13,7 @@ States define_states() {
     int n_excited_states = 1;
     int n_ground_states = 2;
 
-    std::array<double, 3> B_direction = {0.0, 0.0, 1.0};
+    std::array<double, 3> B_direction = {std::sqrt(2.0), 0.0, std::sqrt(2.0)};
 
     double G1 = 0.4 * 2 * parameters::pi * 6e6;
     double G2 = 0.6 * 2 * parameters::pi * 6e6;
@@ -60,12 +60,12 @@ Params create_params(const States& states) {
 
     params.n_beams = 2;
 
-    int size_D = 40;
+    int size_D = 20;
 
     // Detunings
     DoubleVec D1s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = static_cast<double>(i - 20) / 20.0 * 2e6;  // linspace(-2e6,2e6,40)
+        double delta = static_cast<double>(i - 10.0) / 10.0 * 0.5e6;  // linspace(-0.5e6,0.5e6,20)
         double val = 2.0 * parameters::pi * 94.5e6 + 2 * parameters::pi * delta;
         D1s(i) = val;
     }
@@ -82,7 +82,7 @@ Params create_params(const States& states) {
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 10.0, 50.0;
+    params.I << 5.0, 20.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
@@ -90,16 +90,16 @@ Params create_params(const States& states) {
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << 0.0, 0.0, 1.0,  1.0, 0.0, 0.0;
+    params.k << std::sqrt(2.0), 0.0, std::sqrt(2.0),  std::sqrt(2.0), 0.0, -std::sqrt(2.0);
 
     params.omega_x = 2 * parameters::pi * 73e3;
     params.omega_z = 2 * parameters::pi * 10e3;
 
-    params.n_x_max = 1;
-    params.n_z_max = 10;
+    params.n_x_max = 10;
+    params.n_z_max = 1;
 
-    params.n_x_init = 0;
-    params.n_z_init = 5;
+    params.n_x_init = 5;
+    params.n_z_init = 0;
 
     params.mass = 87 * parameters::atomic_unit_weight;
 

@@ -49,7 +49,7 @@ std::vector<std::tuple<int, int, double>> build_L(const std::vector<Eigen::Matri
 using StateCarry = std::tuple<VectorXc,int,int,VecD,VecD, // psi, scatter_count, ii, nx, nz
                               std::vector<std::tuple<int, int, double>>, // Lt entries: i,j,val
                               std::vector<std::pair<MatrixXc,double>>, // Ht
-                              MatrixXc, // K
+                              MatrixXc, double, // K, G_tot
                               int, int, int, // sizes: n_s,n_x,n_z
                               std::mt19937>; // rng seed
 std::pair<StateCarry, void*> step(const StateCarry& carry,
@@ -61,6 +61,7 @@ solve(const VecD& time,
       const VectorXc& psi0,
       const std::vector<std::pair<MatrixXc,double>>& Ht,
       const std::vector<std::tuple<int, int, double>>& Lt,
+      const double G_tot,
       int n_s, int n_x, int n_z,
       const std::vector<unsigned int>& keys);
 
