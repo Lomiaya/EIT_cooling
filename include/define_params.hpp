@@ -35,7 +35,21 @@ struct Params {
     double mass;
 };
 
-Params create_params();
+struct States {
+    int n_ground_states;
+    int n_excited_states;
+
+    std::array<double, 3> B_direction;
+
+    double G_tot;
+
+    std::vector<Eigen::MatrixXd> G; // shape: [3][n_excited_states][n_ground_states]
+
+    ComplexMat H_ground;  // n_ground_states x n_ground_states
+    ComplexMat H_excited; // n_excited_states x n_excited_states
+
+    double transition_lambda;
+};
 
 } // namespace define_params
 

@@ -20,8 +20,8 @@ set(SOURCE_FILES
     src/hamiltonian.cpp
     src/stochastic_schrodinger.cpp
     src/stochastic_schrodinger_spin_motion.cpp
-    src/define_params.cpp
     src/atomic_states.cpp
+    src/simulation.cpp
 )
 
 # Header files (optional: for IDEs and clarity)
@@ -33,6 +33,7 @@ set(HEADER_FILES
     include/stochastic_schrodinger_spin_motion.hpp
     include/define_params.hpp
     include/atomic_states.hpp
+    include/simulation.hpp
 )
 
 # Create static library
@@ -57,6 +58,7 @@ if (MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(quantum_core PRIVATE "/DNDEBUG")
     target_compile_options(quantum_core PRIVATE "/RTC-")
     target_compile_options(quantum_core PRIVATE "/Ox")
+    target_compile_options(quantum_core PRIVATE "/openmp")
 endif()
 
 # Enable testing if desired

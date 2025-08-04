@@ -4,6 +4,7 @@
 #include <unsupported/Eigen/MatrixFunctions> // for expm
 #include <cmath>
 #include <numeric>
+#include <omp.h>
 
 namespace ss_spin {
 
@@ -262,33 +263,51 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     std::vector<int> all_jumps;
     std::vector<VectorXc> all_final_psis;
 
-    for (const auto& seed : keys) {
-        std::mt19937 rng(seed);
-        VecD nx = VecD::Zero(num_steps);
-        VecD nz = VecD::Zero(num_steps);
+    #pragma omp parallel
+    {
+        std::vector<VectorXc> local_final_psis;
+        std::vector<int> local_jumps;
+        std::vector<VecD> local_nx;
+        std::vector<VecD> local_nz;
 
-        StateCarry state = std::make_tuple(
-            psi0,
-            0, // scatter_count
-            0, // ii
-            nx,
-            nz,
-            Lt,
-            Ht,
-            K,
-            n_s, n_x, n_z,
-            rng
-        );
+        #pragma omp for nowait
+        for (int i = 0; i < keys.size(); ++i) {
+            const auto& seed = keys[i];
+            std::mt19937 rng(seed);
+            VecD nx = VecD::Zero(num_steps);
+            VecD nz = VecD::Zero(num_steps);
 
-        for (const auto& t_pair : t_pairs) {
-            state = step(state, t_pair).first;
+            StateCarry state = std::make_tuple(
+                psi0,
+                0, // scatter_count
+                0, // ii
+                nx,
+                nz,
+                Lt,
+                Ht,
+                K,
+                n_s, n_x, n_z,
+                rng
+            );
+
+            for (const auto& t_pair : t_pairs) {
+                state = step(state, t_pair).first;
+            }
+
+            auto& [final_psi, scatter_count, ii, final_nx, final_nz, _, __, ___, ____, _____, ______, _______] = state;
+            local_final_psis.push_back(final_psi);
+            local_jumps.push_back(scatter_count);
+            local_nx.push_back(final_nx);
+            local_nz.push_back(final_nz);
         }
 
-        auto& [final_psi, scatter_count, ii, final_nx, final_nz, _, __, ___, ____, _____, ______, _______] = state;
-        all_final_psis.push_back(final_psi);
-        all_jumps.push_back(scatter_count);
-        all_nx.push_back(final_nx);
-        all_nz.push_back(final_nz);
+        #pragma omp critical
+        {
+            all_final_psis.insert(all_final_psis.end(), local_final_psis.begin(), local_final_psis.end());
+            all_jumps.insert(all_jumps.end(), local_jumps.begin(), local_jumps.end());
+            all_nx.insert(all_nx.end(), local_nx.begin(), local_nx.end());
+            all_nz.insert(all_nz.end(), local_nz.begin(), local_nz.end());
+        }
     }
 
     // Average nx and nz
