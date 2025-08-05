@@ -193,158 +193,6 @@ std::vector<std::tuple<int, int, double>> build_L(
     return Lt;
 }
 
-// std::pair<StateCarry, void*> step(const StateCarry& carry,
-//                                   const std::pair<double, double>& t_pair) {
-//     auto [psi, scatter_count, ii, nx, nz, Lt, Ht, K, G_tot, n_g, n_s, n_x, n_z, rng] = carry;
-//     double t0 = t_pair.first;
-//     double t1 = t_pair.second;
-//     double dt = t1 - t0;
-
-//     // Non-stochastic evolution using Magnus expansion
-//     MatrixXc expH = magnus2_analytic(Ht, K, t0, t1);
-//     psi = expH * psi;
-//     psi.normalize();
-
-//     // double jump_prob = (psi.adjoint() * K * psi)[0,0].real() * dt;
-//     double jump_prob = psi.tail(psi.size() - n_g * n_x * n_z).squaredNorm() * G_tot * dt;
-//     std::vector<double> probs_jump = {jump_prob, 1 - jump_prob};
-//     std::discrete_distribution<> dist_jump(probs_jump.begin(), probs_jump.end());
-//     int idx_jump = dist_jump(rng);
-
-//     if (idx_jump == 0) {
-//         // Compute probabilities
-//         std::vector<double> probs;
-//         probs.reserve(Lt.size());
-
-//         for (const auto& [i, j, val] : Lt) {
-//             Complex Li_psi = val * psi(j);
-//             Complex Li_dag_Li_psi_j = std::conj(val) * Li_psi;
-//             Complex dot = std::conj(psi(j)) * Li_dag_Li_psi_j;
-//             probs.push_back(dt * dot.real());
-//         }
-
-//         std::discrete_distribution<> dist(probs.begin(), probs.end());
-//         int idx = dist(rng);
-
-//         auto [i, j, val] = Lt[idx];
-//         VectorXc psi_post = VectorXc::Zero(psi.size());
-//         psi_post(i) = val * psi(j);
-//         psi = psi_post;
-//         scatter_count += 1;
-//     }
-
-//     psi.normalize();
-
-//     // Record observable
-//     auto [nxi, nzi] = compute_avg_x_z(psi, n_s, n_x, n_z);
-//     nx(ii) = nxi;
-//     nz(ii) = nzi;
-//     ii += 1;
-
-//     StateCarry new_state = std::make_tuple(psi, scatter_count, ii, nx, nz,
-//                                            Lt, Ht, K, G_tot, n_g, n_s, n_x, n_z, std::move(rng));
-//     return {new_state, nullptr};
-// }
-
-// std::tuple<VectorXc, double, VecD, VecD> solve(
-//     const VecD& time,
-//     const VectorXc& psi0,
-//     const std::vector<std::pair<MatrixXc, double>>& Ht,
-//     const std::vector<std::tuple<int, int, double>>& Lt,
-//     const double G_tot, int n_g,
-//     int n_s, int n_x, int n_z,
-//     const std::vector<unsigned int>& keys)
-// {
-//     int num_steps = time.size() - 1;
-//     int n_states = n_s * n_x * n_z;
-
-//     // Build K matrix (diagonal)
-//     MatrixXc K = MatrixXc::Zero(n_states, n_states);
-//     for (const auto& [i, j, v] : Lt) {
-//         K(j, j) += std::norm(v);
-//     }
-
-//     // Precompute time pairs
-//     std::vector<std::pair<double, double>> t_pairs;
-//     t_pairs.reserve(num_steps);
-//     for (int i = 0; i < num_steps; ++i) {
-//         t_pairs.emplace_back(time(i), time(i + 1));
-//     }
-
-//     // Outputs for averaging
-//     std::vector<VecD> all_nx;
-//     std::vector<VecD> all_nz;
-//     std::vector<int> all_jumps;
-//     std::vector<VectorXc> all_final_psis;
-
-//     #pragma omp parallel
-//     {
-//         std::vector<VectorXc> local_final_psis;
-//         std::vector<int> local_jumps;
-//         std::vector<VecD> local_nx;
-//         std::vector<VecD> local_nz;
-
-//         #pragma omp for nowait
-//         for (int i = 0; i < keys.size(); ++i) {
-//             const auto& seed = keys[i];
-//             std::mt19937 rng(seed);
-//             VecD nx = VecD::Zero(num_steps);
-//             VecD nz = VecD::Zero(num_steps);
-
-//             StateCarry state = std::make_tuple(
-//                 psi0,
-//                 0, // scatter_count
-//                 0, // ii
-//                 nx,
-//                 nz,
-//                 Lt,
-//                 Ht,
-//                 K,
-//                 G_tot,
-//                 n_g, n_s, n_x, n_z,
-//                 rng
-//             );
-
-//             for (const auto& t_pair : t_pairs) {
-//                 state = step(state, t_pair).first;
-//             }
-
-//             auto& [final_psi, scatter_count, ii, final_nx, final_nz, _, __, ___, ____, _____, ______, _______, ________, _________] = state;
-//             local_final_psis.push_back(final_psi);
-//             local_jumps.push_back(scatter_count);
-//             local_nx.push_back(final_nx);
-//             local_nz.push_back(final_nz);
-//         }
-
-//         #pragma omp critical
-//         {
-//             all_final_psis.insert(all_final_psis.end(), local_final_psis.begin(), local_final_psis.end());
-//             all_jumps.insert(all_jumps.end(), local_jumps.begin(), local_jumps.end());
-//             all_nx.insert(all_nx.end(), local_nx.begin(), local_nx.end());
-//             all_nz.insert(all_nz.end(), local_nz.begin(), local_nz.end());
-//         }
-//     }
-
-//     // Average nx and nz
-//     VecD avg_nx = VecD::Zero(num_steps);
-//     VecD avg_nz = VecD::Zero(num_steps);
-//     for (int i = 0; i < num_steps; ++i) {
-//         for (int k = 0; k < all_nx.size(); ++k) {
-//             avg_nx(i) += all_nx[k](i);
-//             avg_nz(i) += all_nz[k](i);
-//         }
-//         avg_nx(i) /= static_cast<double>(all_nx.size());
-//         avg_nz(i) /= static_cast<double>(all_nz.size());
-//     }
-
-//     // Average number of jumps
-//     double avg_jumps = std::accumulate(all_jumps.begin(), all_jumps.end(), 0.0) /
-//                        static_cast<double>(all_jumps.size());
-
-//     // Return final psi of last run (just like in Python)
-//     return {all_final_psis.back(), avg_jumps, avg_nx, avg_nz};
-// }
-
 // Kernel function that consumes Data
 std::pair<StateCarry, void*> step(const StateCarry& carry,
                                   MatrixXc expH) {
@@ -420,8 +268,8 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     int num_steps = time.size() - 1;
     int n_states = n_s * n_x * n_z;
     
-    // const size_t total = num_steps; // Total number of elements to produce/consume
-    const size_t total = 100; // Total number of elements to produce/consume
+    const size_t total = num_steps; // Total number of elements to produce/consume
+    // const size_t total = 100; // Total number of elements to produce/consume
 
     // Build K matrix (diagonal)
     MatrixXc K = MatrixXc::Zero(n_states, n_states);
@@ -452,8 +300,8 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
                 stash.emplace(d, 0, idx);  // stash maintains insertion order
                 ++next_expected_idx;
 
-                std::cout << "Produced element " << idx << " by producer "
-                        << std::this_thread::get_id() << std::endl;
+                // std::cout << "Produced element " << idx << " by producer "
+                //         << std::this_thread::get_id() << std::endl;
 
                 lock.unlock(); // not really needed.
             }
@@ -468,30 +316,40 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     auto make_consumer = [&](StateCarry init_state, std::promise<StateCarry> result_promise) {
         return [&, state = std::move(init_state), result = std::move(result_promise)]() mutable {
             for (size_t i = 0; i < total; ++i) {
-                std::unique_lock<std::mutex> lock(mtx);
-                cv_consume.wait(lock, [&]() { return !stash.empty(); });
+                {
+                    std::unique_lock<std::mutex> lock(mtx);
+                    cv_consume.wait(lock, [&]() { return !stash.empty() && std::get<2>(stash.front()) == i; });
 
-                auto& [d, count, idx] = stash.front();
-                if (idx != i) {
+                    auto& [d, count, idx] = stash.front();
+
+                    // std::cout << "Consumed element " << idx << ", " << i << " by consumer "
+                    //         << std::this_thread::get_id() << std::endl;
+
                     lock.unlock();
-                    i -= 1;
-                    continue;
-                }
-                ++count;
 
-                std::cout << "Consumed element " << idx << ", " << i << " by consumer "
-                        << std::this_thread::get_id() << std::endl;
-
-                if (count == N) {
-                    stash.pop();
-                    lock.unlock();
-                    cv_produce.notify_one();
-                } else {
-                    lock.unlock(); // Don't notify producer yet
+                    // Process the data
+                    state = step(state, d).first;
                 }
 
-                // Process the data
-                state = step(state, d).first;
+                {
+                    std::unique_lock<std::mutex> lock(mtx);
+                    cv_consume.wait(lock, [&]() { return !stash.empty() && std::get<2>(stash.front()) == i; });
+
+                    auto& [d, count, idx] = stash.front();
+                    ++count;
+
+                    // std::cout << "Tagged off element " << idx << ", " << i << " by consumer "
+                    //         << std::this_thread::get_id() << std::endl;
+
+                    if (count == N) {
+                        stash.pop();
+                        lock.unlock();
+                        cv_produce.notify_one();
+                        cv_consume.notify_all();
+                    } else {
+                        lock.unlock(); // Don't notify producer yet
+                    }
+                }
             }
 
             // Return the final state
@@ -546,6 +404,8 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     // Rearrange collected results
     std::vector<VecD> all_nx;
     std::vector<VecD> all_nz;
+    VecD avg_nx = VecD::Zero(num_steps);
+    VecD avg_nz = VecD::Zero(num_steps);
     std::vector<int> all_jumps;
     std::vector<VectorXc> all_final_psis;
     for (auto& final_state: final_states) {
@@ -557,8 +417,6 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     }
 
     // Average nx and nz
-    VecD avg_nx = VecD::Zero(num_steps);
-    VecD avg_nz = VecD::Zero(num_steps);
     for (int i = 0; i < num_steps; ++i) {
         for (int k = 0; k < all_nx.size(); ++k) {
             avg_nx(i) += all_nx[k](i);

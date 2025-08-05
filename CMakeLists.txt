@@ -48,12 +48,12 @@ target_link_libraries(fano_test PRIVATE quantum_core)
 add_executable(simulation examples/simulation.cpp)
 target_link_libraries(simulation PRIVATE quantum_core)
 
-# if (MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
-#     target_compile_options(quantum_core PRIVATE "/DNDEBUG")
-#     target_compile_options(quantum_core PRIVATE "/RTC-")
-#     target_compile_options(quantum_core PRIVATE "/Ox")
-#     target_compile_options(quantum_core PRIVATE "/openmp")
-# endif()
+if (MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_options(quantum_core PRIVATE "/DNDEBUG")
+    target_compile_options(quantum_core PRIVATE "/RTC-")
+    target_compile_options(quantum_core PRIVATE "/Ox")
+    target_compile_options(quantum_core PRIVATE "/openmp")
+endif()
 
 # Enable testing if desired
 # enable_testing()
