@@ -62,7 +62,7 @@ solve(const VecD& time,
       const std::vector<std::tuple<int, int, double>>& Lt,
       const double G_tot, int n_g,
       int n_s, int n_x, int n_z,
-      const std::vector<unsigned int>& keys);
+      int num_keys);
 
 } // namespace ss_spin
 

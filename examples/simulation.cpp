@@ -6,6 +6,6 @@ using namespace atomic_states;
 int main() {
     States states = define_states();
     Params params = create_params(states);
-    auto _ = simulation::simulate(params, states, 10001, 200e-6);
+    auto _ = simulation::simulate(params, states, 10001, 200e-6, 10);
     return 0;
 }

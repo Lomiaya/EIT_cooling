@@ -250,9 +250,9 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     const std::vector<std::tuple<int, int, double>>& Lt,
     const double G_tot, int n_g,
     int n_s, int n_x, int n_z,
-    const std::vector<unsigned int>& keys)
+    int num_keys)
 {
-    const size_t N = 5;   // Number of consumer threads & loops per thread
+    const size_t N = num_keys;   // Number of consumer threads & loops per thread
     const size_t M = 5;   // Number of producer threads
     const size_t stash_capacity = 100;   // Stash capacity
 
@@ -292,11 +292,10 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
 
             // Wait until it's this producer's turn to emplace
             {
+                // Produce data
+                MatrixXc d = magnus2_analytic(Ht, K, t_pairs[idx].first, t_pairs[idx].second);
                 std::unique_lock<std::mutex> lock(mtx);
                 cv_produce.wait(lock, [&]() { return idx == next_expected_idx && stash.size() < stash_capacity; });
-
-                // Produce data)
-                MatrixXc d = magnus2_analytic(Ht, K, t_pairs[idx].first, t_pairs[idx].second);
                 stash.emplace(d, 0, idx);  // stash maintains insertion order
                 ++next_expected_idx;
 
@@ -368,7 +367,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     std::vector<std::thread> consumers;
     std::vector<std::future<StateCarry>> consumer_results;
     for (size_t i = 0; i < N; ++i) {
-        const auto& seed = keys[i];
+        const auto& seed = i;
         std::mt19937 rng(seed);
         float dt = time(1) - time(0);
         VecD nx = VecD::Zero(num_steps);

@@ -52,7 +52,6 @@ if (MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(quantum_core PRIVATE "/DNDEBUG")
     target_compile_options(quantum_core PRIVATE "/RTC-")
     target_compile_options(quantum_core PRIVATE "/Ox")
-    target_compile_options(quantum_core PRIVATE "/openmp")
 endif()
 
 # Enable testing if desired
