@@ -107,7 +107,7 @@ MatrixXcd build_H_light_transition(double Iii,
                 if (excite) ov = conj(ov);
                 contrib += Gijk * sat_param * pol[pol_dir] * ov;
             }
-            Hex(i, j) = contrib;
+            Hex(i, j) = contrib / Complex(2, 0);
         }
     }
     return Hex;

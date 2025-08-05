@@ -147,8 +147,8 @@ std::vector<std::tuple<int, int, double>> build_L(
         return (s * n_x + x) * n_z + z;
     };
 
-    auto bound = [&](int z) {
-        return std::clamp(z, 0, n_x - 1);
+    auto bound = [&](int x) {
+        return std::clamp(x, 0, n_x - 1);
     };
 
     for (int i = 0; i < full_full_size; ++i) {
@@ -195,8 +195,8 @@ std::vector<std::tuple<int, int, double>> build_L(
 
 // Kernel function that consumes Data
 std::pair<StateCarry, void*> step(const StateCarry& carry,
-                                  MatrixXc expH) {
-    auto [psi, scatter_count, ii, nx, nz, Lt, G_tot, n_g, n_s, n_x, n_z, dt, rng] = carry;
+                                  MatrixXc& expH) {
+    auto [psi, scatter_count, ii, step_count, per_log_step, nx, nz, Lt, G_tot, n_g, n_s, n_x, n_z, dt, rng] = carry;
 
     // Non-stochastic evolution using Magnus expansion
     psi = expH * psi;
@@ -233,18 +233,23 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
     psi.normalize();
 
     // Record observable
-    auto [nxi, nzi] = compute_avg_x_z(psi, n_s, n_x, n_z);
-    nx(ii) = nxi;
-    nz(ii) = nzi;
-    ii += 1;
+    if (step_count % per_log_step == 0) {
+        auto [nxi, nzi] = compute_avg_x_z(psi, n_s, n_x, n_z);
+        nx(ii) = nxi;
+        nz(ii) = nzi;
+        ii += 1;
+    }
+    step_count += 1;
 
-    StateCarry new_state = std::make_tuple(psi, scatter_count, ii, nx, nz,
+    StateCarry new_state = std::make_tuple(psi, scatter_count, ii, step_count, per_log_step, nx, nz,
                                            Lt, G_tot, n_g, n_s, n_x, n_z, dt, std::move(rng));
     return {new_state, nullptr};
 }
 
 std::tuple<VectorXc, double, VecD, VecD> solve(
-    const VecD& time,
+    const double time_step,
+    const long long num_steps,
+    const long long per_log_step,
     const VectorXc& psi0,
     const std::vector<std::pair<MatrixXc, double>>& Ht,
     const std::vector<std::tuple<int, int, double>>& Lt,
@@ -265,7 +270,6 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     std::atomic<size_t> consume_count{0};
     std::atomic<size_t> next_expected_idx{0}; // controls sequential emplacement
 
-    int num_steps = time.size() - 1;
     int n_states = n_s * n_x * n_z;
     
     const size_t total = num_steps; // Total number of elements to produce/consume
@@ -277,13 +281,6 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
         K(j, j) += std::norm(v);
     }
 
-    // Precompute time pairs
-    std::vector<std::pair<double, double>> t_pairs;
-    t_pairs.reserve(num_steps);
-    for (int i = 0; i < num_steps; ++i) {
-        t_pairs.emplace_back(time(i), time(i + 1));
-    }
-
     // Producer threads
     auto producer = [&]() {
         while (true) {
@@ -293,16 +290,19 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
             // Wait until it's this producer's turn to emplace
             {
                 // Produce data
-                MatrixXc d = magnus2_analytic(Ht, K, t_pairs[idx].first, t_pairs[idx].second);
+                double time0 = time_step * idx;
+                double time1 = time0 + time_step;
+                MatrixXc d = magnus2_analytic(Ht, K, time0, time1);
                 std::unique_lock<std::mutex> lock(mtx);
                 cv_produce.wait(lock, [&]() { return idx == next_expected_idx && stash.size() < stash_capacity; });
                 stash.emplace(d, 0, idx);  // stash maintains insertion order
                 ++next_expected_idx;
-
-                // std::cout << "Produced element " << idx << " by producer "
-                //         << std::this_thread::get_id() << std::endl;
-
                 lock.unlock(); // not really needed.
+
+                if (idx % per_log_step == 0) {
+                    std::cout << "Produced element " << idx << " by producer "
+                            << std::this_thread::get_id() << std::endl;
+                }
             }
 
             // Notify all consumers and producers (one may be waiting to insert next)
@@ -369,19 +369,21 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     for (size_t i = 0; i < N; ++i) {
         const auto& seed = i;
         std::mt19937 rng(seed);
-        float dt = time(1) - time(0);
-        VecD nx = VecD::Zero(num_steps);
-        VecD nz = VecD::Zero(num_steps);
+        size_t num_log = (num_steps - 1) / per_log_step + 1;
+        VecD nx = VecD::Zero(num_log);
+        VecD nz = VecD::Zero(num_log);
         StateCarry init_state = std::make_tuple(
             psi0,
             0, // scatter_count
             0, // ii
+            0, // step_count
+            per_log_step,
             nx,
             nz,
             Lt,
             G_tot,
             n_g, n_s, n_x, n_z,
-            dt,
+            time_step,
             rng
         );
         std::promise<StateCarry> p;
@@ -403,12 +405,13 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     // Rearrange collected results
     std::vector<VecD> all_nx;
     std::vector<VecD> all_nz;
-    VecD avg_nx = VecD::Zero(num_steps);
-    VecD avg_nz = VecD::Zero(num_steps);
+    size_t num_log = (num_steps - 1) / per_log_step + 1;
+    VecD avg_nx = VecD::Zero(num_log);
+    VecD avg_nz = VecD::Zero(num_log);
     std::vector<int> all_jumps;
     std::vector<VectorXc> all_final_psis;
     for (auto& final_state: final_states) {
-        auto& [psi, scatter_count, ii, nx, nz, Lt, G_tot, n_g, n_s, n_x, n_z, dt, rng] = final_state;
+        auto& [psi, scatter_count, ii, step_count, per_log_step, nx, nz, Lt, G_tot, n_g, n_s, n_x, n_z, dt, rng] = final_state;
         all_final_psis.push_back(psi);
         all_jumps.push_back(scatter_count);
         all_nx.push_back(nx);
@@ -416,7 +419,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     }
 
     // Average nx and nz
-    for (int i = 0; i < num_steps; ++i) {
+    for (int i = 0; i < num_log; ++i) {
         for (int k = 0; k < all_nx.size(); ++k) {
             avg_nx(i) += all_nx[k](i);
             avg_nz(i) += all_nz[k](i);

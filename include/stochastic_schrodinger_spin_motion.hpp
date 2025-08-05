@@ -46,7 +46,7 @@ std::vector<std::tuple<int, int, double>> build_L(const std::vector<Eigen::Matri
                                                   unsigned int seed);
 
 // Time‐step for spin‐motion evolution
-using StateCarry = std::tuple<VectorXc,int,int,VecD,VecD, // psi, scatter_count, ii, nx, nz
+using StateCarry = std::tuple<VectorXc,int,long long, long long,long long,VecD,VecD, // psi, scatter_count, ii, nx, nz
                               std::vector<std::tuple<int, int, double>>, // Lt entries: i,j,val
                               double, // G_tot
                               int, int, int, int, // sizes: n_g,n_s,n_x,n_z
@@ -56,7 +56,9 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
 
 // Full solve: returns (final psi, mean jumps, avg_x, avg_z)
 std::tuple<VectorXc,double,VecD,VecD>
-solve(const VecD& time,
+solve(const double time_step,
+      const long long num_steps,
+      const long long per_log_step,
       const VectorXc& psi0,
       const std::vector<std::pair<MatrixXc,double>>& Ht,
       const std::vector<std::tuple<int, int, double>>& Lt,

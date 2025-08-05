@@ -110,15 +110,15 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
 
             cout << "Size of L: " << L.size() << endl;
 
-            VectorXd t = VectorXd::LinSpaced(N, 0.0, t_0);
-            cout << "dt: " << (t[1] - t[0]) << endl;
+            double dt = t_0 / N;
+            cout << "dt: " << dt << endl;
 
             VectorXcd psi0 = VectorXcd::Zero(size);
             int idx0 = from_tuple_to_number(2, params.n_x_init, params.n_z_init, params);
             psi0[idx0] = 1.0;
 
             auto [psi_final, jumps, nx_over_t, nz_over_t] =
-                ss_spin::solve(t, psi0, H, L, def_states.G_tot, def_states.n_ground_states, n_states, params.n_x_max, params.n_z_max, num_keys);
+                ss_spin::solve(dt, N, N / 10, psi0, H, L, def_states.G_tot, def_states.n_ground_states, n_states, params.n_x_max, params.n_z_max, num_keys);
 
             cout << "3. Function returned!" << endl;
 
