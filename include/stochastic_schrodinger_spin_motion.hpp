@@ -46,12 +46,17 @@ std::vector<std::tuple<int, int, double>> build_L(const std::vector<Eigen::Matri
                                                   unsigned int seed);
 
 // Time‐step for spin‐motion evolution
+// using StateCarry = std::tuple<VectorXc,int,int,VecD,VecD, // psi, scatter_count, ii, nx, nz
+//                               std::vector<std::tuple<int, int, double>>, // Lt entries: i,j,val
+//                               std::vector<std::pair<MatrixXc,double>>, // Ht
+//                               MatrixXc, double, // K, G_tot
+//                               int, int, int, int, // sizes: n_g,n_s,n_x,n_z
+//                               std::mt19937>; // rng seed
 using StateCarry = std::tuple<VectorXc,int,int,VecD,VecD, // psi, scatter_count, ii, nx, nz
                               std::vector<std::tuple<int, int, double>>, // Lt entries: i,j,val
-                              std::vector<std::pair<MatrixXc,double>>, // Ht
-                              MatrixXc, double, // K, G_tot
+                              double, // G_tot
                               int, int, int, int, // sizes: n_g,n_s,n_x,n_z
-                              std::mt19937>; // rng seed
+                              double, std::mt19937>; // dt, rng seed
 std::pair<StateCarry, void*> step(const StateCarry& carry,
                                   const std::pair<double,double>& t_pair);
 
