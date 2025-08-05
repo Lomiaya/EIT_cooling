@@ -65,12 +65,12 @@ Params create_params(const States& states) {
     // Detunings
     DoubleVec D1s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = static_cast<double>(i - 0.0) / 10.0 * 0.5e6;  // linspace(-0.5e6,0.5e6,20)
-        double val = 2.0 * parameters::pi * 94.5e6 + 2 * parameters::pi * delta;
+        double delta = (static_cast<double>(i) - 3.0) / 10.0 * 0.5e6;  // linspace(-0.5e6,0.5e6,20)
+        double val = 2.0 * parameters::pi * 94.5e6 + 2.0 * parameters::pi * delta;
         D1s(i) = val;
     }
 
-    double D2 = 2.0 * parameters::pi * 94.5e6 + states.H_ground(1,1).real();
+    double D2 = 2.0 * parameters::pi * 94.5e6 - states.H_ground(1,1).real(); // this is blue detuning!
     DoubleMat D(size_D,params.n_beams);
     int i = 0;
     for (const auto& D1 : D1s) {
@@ -82,15 +82,15 @@ Params create_params(const States& states) {
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 5.0, 20.0;
+    params.I << 20.0, 400.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
-    params.s << 1.0, 0.0, 0.0,  0.0, 1.0, 0.0;
+    params.s << 0.0, 1.0, 0.0,  1.0, 0.0, 0.0;
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << std::sqrt(2.0), 0.0, std::sqrt(2.0),  std::sqrt(2.0), 0.0, -std::sqrt(2.0);
+    params.k << std::sqrt(2.0), 0.0, -std::sqrt(2.0),  std::sqrt(2.0), 0.0, std::sqrt(2.0);
 
     params.omega_x = 2 * parameters::pi * 73e3;
     params.omega_z = 2 * parameters::pi * 10e3;

@@ -55,5 +55,5 @@ if (MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 # Enable testing if desired
-# enable_testing()
-# add_subdirectory(tests)
+enable_testing()
+add_subdirectory(tests)

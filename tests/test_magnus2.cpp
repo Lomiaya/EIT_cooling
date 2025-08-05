@@ -10,7 +10,8 @@ int main() {
     H1b<< 0,1, 0,0;
     G  << 1,0, 0,0;
     double t0=0, t1=0.5;
-    std::vector<std::pair<MatrixXc,double>> Hs = {{H0,0},{H1,1},{H1b,-1}};
+    double freq = 0.0;
+    std::vector<std::pair<MatrixXc,double>> Hs = {{H0,0},{H1,freq},{H1b,-freq}};
     auto start_time = std::chrono::high_resolution_clock::now();
     for (int i=0; i<20; ++i) {
         auto U_bf = brute_force(Hs,G,t0,t1);
