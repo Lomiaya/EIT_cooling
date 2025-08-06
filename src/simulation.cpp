@@ -97,9 +97,9 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
 
             cout << "1. Finished Building H!" << endl;
 
-            for (auto& [H_i, D_i]: H) {
-                cout << H_i << endl << D_i << endl;
-            }
+            // for (auto& [H_i, D_i]: H) {
+            //     cout << H_i << endl << D_i << endl;
+            // }
 
             unsigned int seed = 42;
             int num_G_nonzero_entries = 0;
@@ -112,9 +112,9 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
 
             cout << "2. Finished Building L!" << endl;
 
-            for (auto& [s1, s2, amp]: L) {
-                cout << s1 << " " << s2 << " " << amp * amp << endl;
-            }
+            // for (auto& [s1, s2, amp]: L) {
+            //     cout << s1 << " " << s2 << " " << amp * amp << endl;
+            // }
 
             cout << "Size of L: " << L.size() << endl;
 

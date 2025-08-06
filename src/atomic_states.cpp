@@ -60,12 +60,12 @@ Params create_params(const States& states) {
 
     params.n_beams = 2;
 
-    int size_D = 20;
+    int size_D = 13;
 
     // Detunings
     DoubleVec D1s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 3.0) / 10.0 * 0.5e6;  // linspace(-0.5e6,0.5e6,20)
+        double delta = (static_cast<double>(i) - 3.0) / 10.0 * 0.2e6;
         double val = 2.0 * parameters::pi * 94.5e6 + 2.0 * parameters::pi * delta;
         D1s(i) = val;
     }
@@ -78,11 +78,11 @@ Params create_params(const States& states) {
         D(i,1) = D2;
         i += 1;
     }
-    params.D = D; // this is blue detuning?
+    params.D = D; // this is blue detuning!
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 20.0, 400.0;
+    params.I << 25.0, 400.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
@@ -95,10 +95,10 @@ Params create_params(const States& states) {
     params.omega_x = 2 * parameters::pi * 73e3;
     params.omega_z = 2 * parameters::pi * 10e3;
 
-    params.n_x_max = 1;
+    params.n_x_max = 3;
     params.n_z_max = 1;
 
-    params.n_x_init = 0;
+    params.n_x_init = 1;
     params.n_z_init = 0;
 
     params.mass = 87 * parameters::atomic_unit_weight;

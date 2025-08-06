@@ -53,7 +53,7 @@ MatrixXcd build_H_zero_freq(const MatrixXcd& H_ground,
 
     for (int i = 0; i < size; ++i) {
         auto [s, x, z] = from_number_to_tuple(i, n_x_max, n_z_max);
-        double deltaE = (x * params.omega_x + z * params.omega_z) * parameters::reduced_plancks_constant;
+        double deltaE = (x * params.omega_x + z * params.omega_z);
         H0(i, i) += complex<double>(deltaE, 0);
     }
 
@@ -93,8 +93,8 @@ MatrixXcd build_H_light_transition(double Iii,
             complex<double> contrib = 0.0;
             for (int pol_dir = 0; pol_dir < 3; ++pol_dir) {
                 complex<double> Gijk = G[pol_dir](e, g);
-                Vector3i from = excite ? Vector3i{xj, zi, zj} : Vector3i{xi, zj, zi};
-                Vector3i to   = excite ? Vector3i{xi, zi, zi} : Vector3i{xj, zj, zj};
+                Vector3i from = excite ? Vector3i{xj, xi, zj} : Vector3i{xi, xj, zi};
+                Vector3i to   = excite ? Vector3i{xi, xi, zi} : Vector3i{xj, xj, zj};
                 chance_of_jump::Vec3 wavevector_ = { wavevector[0], wavevector[1], wavevector[2] };
                 std::array<int, 3> from_ = { from[0], from[1], from[2] };
                 std::array<int, 3> to_ = { to[0], to[1], to[2] };

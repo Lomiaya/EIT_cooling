@@ -20,7 +20,7 @@ public:
     HalfInteger operator+(const HalfInteger& other) const { return from_twice(twice_value + other.twice_value); }
     HalfInteger operator-(const HalfInteger& other) const { return from_twice(twice_value - other.twice_value); }
     HalfInteger operator-() const {return from_twice(-twice_value);}
-    HalfInteger operator++() const {return from_twice(twice_value + 1);} // actually only adds 0.5.
+    HalfInteger operator++() const {return from_twice(twice_value + 2);}
     bool operator<(const HalfInteger& other) const { return twice_value < other.twice_value; }
     bool operator<=(const HalfInteger& other) const { return twice_value <= other.twice_value; }
     bool operator>(const HalfInteger& other) const { return twice_value > other.twice_value; }
