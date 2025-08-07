@@ -49,9 +49,20 @@ double SpinRotation(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
     unpack(a, va, Sa, Ia, La, Na, Ja, Fa, Ma);
     unpack(b, vb, Sb, Ib, Lb, Nb, Jb, Fb, Mb);
-    double Sad, Iad, Lad, Nad, Jad, Fad, Mad, Sbd, Ibd, Lbd, Nbd, Jbd, Fbd, Mbd = 
-    double(Sa), double(Ia), double(La), double(Na), double(Ja), double(Fa), double(Ma), 
-    double(Sb), double(Ib), double(Lb), double(Nb), double(Jb), double(Fb), double(Mb);
+    double Sad = double(Sa);
+    double Iad = double(Ia);
+    double Lad = double(La);
+    double Nad = double(Na);
+    double Jad = double(Ja);
+    double Fad = double(Fa);
+    double Mad = double(Ma);
+    double Sbd = double(Sb);
+    double Ibd = double(Ib);
+    double Lbd = double(Lb);
+    double Nbd = double(Nb);
+    double Jbd = double(Jb);
+    double Fbd = double(Fb);
+    double Mbd = double(Mb);
     if (!δ(Ja,Jb)||!δ(Fa,Fb)||!δ(Ma,Mb)||va!=vb)
         return 0.0;
     int phase_ = (Jb + Sa + Na).get_twice();
@@ -88,9 +99,20 @@ double Hyperfine_IS(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
     unpack(a, va, Sa, Ia, La, Na, Ja, Fa, Ma);
     unpack(b, vb, Sb, Ib, Lb, Nb, Jb, Fb, Mb);
-    double Sad, Iad, Lad, Nad, Jad, Fad, Mad, Sbd, Ibd, Lbd, Nbd, Jbd, Fbd, Mbd = 
-    double(Sa), double(Ia), double(La), double(Na), double(Ja), double(Fa), double(Ma), 
-    double(Sb), double(Ib), double(Lb), double(Nb), double(Jb), double(Fb), double(Mb);
+    double Sad = double(Sa);
+    double Iad = double(Ia);
+    double Lad = double(La);
+    double Nad = double(Na);
+    double Jad = double(Ja);
+    double Fad = double(Fa);
+    double Mad = double(Ma);
+    double Sbd = double(Sb);
+    double Ibd = double(Ib);
+    double Lbd = double(Lb);
+    double Nbd = double(Nb);
+    double Jbd = double(Jb);
+    double Fbd = double(Fb);
+    double Mbd = double(Mb);
     if (!δ(La,Lb)||!δ(Na,Nb)||!δ(Fa,Fb)||!δ(Ma,Mb)||va!=vb)
         return 0.0;
     int phase_ = (Nb + Sa + Ja).get_twice();
@@ -121,9 +143,20 @@ double Hyperfine_Dipolar(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
     unpack(a, va, Sa, Ia, La, Na, Ja, Fa, Ma);
     unpack(b, vb, Sb, Ib, Lb, Nb, Jb, Fb, Mb);
-    double Sad, Iad, Lad, Nad, Jad, Fad, Mad, Sbd, Ibd, Lbd, Nbd, Jbd, Fbd, Mbd = 
-    double(Sa), double(Ia), double(La), double(Na), double(Ja), double(Fa), double(Ma), 
-    double(Sb), double(Ib), double(Lb), double(Nb), double(Jb), double(Fb), double(Mb);
+    double Sad = double(Sa);
+    double Iad = double(Ia);
+    double Lad = double(La);
+    double Nad = double(Na);
+    double Jad = double(Ja);
+    double Fad = double(Fa);
+    double Mad = double(Ma);
+    double Sbd = double(Sb);
+    double Ibd = double(Ib);
+    double Lbd = double(Lb);
+    double Nbd = double(Nb);
+    double Jbd = double(Jb);
+    double Fbd = double(Fb);
+    double Mbd = double(Mb);
     if (!δ(Fa,Fb)||!δ(Ma,Mb)||va!=vb)
         return 0.0;
     int phase_ = (Na - La).get_twice();
@@ -157,9 +190,20 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p) {
     HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
     unpack(a, va, Sa, Ia, La, Na, Ja, Fa, Ma);
     unpack(b, vb, Sb, Ib, Lb, Nb, Jb, Fb, Mb);
-    double Sad, Iad, Lad, Nad, Jad, Fad, Mad, Sbd, Ibd, Lbd, Nbd, Jbd, Fbd, Mbd = 
-    double(Sa), double(Ia), double(La), double(Na), double(Ja), double(Fa), double(Ma), 
-    double(Sb), double(Ib), double(Lb), double(Nb), double(Jb), double(Fb), double(Mb);
+    double Sad = double(Sa);
+    double Iad = double(Ia);
+    double Lad = double(La);
+    double Nad = double(Na);
+    double Jad = double(Ja);
+    double Fad = double(Fa);
+    double Mad = double(Ma);
+    double Sbd = double(Sb);
+    double Ibd = double(Ib);
+    double Lbd = double(Lb);
+    double Nbd = double(Nb);
+    double Jbd = double(Jb);
+    double Fbd = double(Fb);
+    double Mbd = double(Mb);
     if (!δ(Ia,Ib)||!δ(Sa,Sb))
         return 0.0;
     HalfInteger q_ = La - Lb;
@@ -233,9 +277,20 @@ double Zeeman(const HundsCaseB_Rot &a, const HundsCaseB_Rot &b, int p) {
     HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
     unpack(a, va, Sa, Ia, La, Na, Ja, Fa, Ma);
     unpack(b, vb, Sb, Ib, Lb, Nb, Jb, Fb, Mb);
-    double Sad, Iad, Lad, Nad, Jad, Fad, Mad, Sbd, Ibd, Lbd, Nbd, Jbd, Fbd, Mbd = 
-    double(Sa), double(Ia), double(La), double(Na), double(Ja), double(Fa), double(Ma), 
-    double(Sb), double(Ib), double(Lb), double(Nb), double(Jb), double(Fb), double(Mb);
+    double Sad = double(Sa);
+    double Iad = double(Ia);
+    double Lad = double(La);
+    double Nad = double(Na);
+    double Jad = double(Ja);
+    double Fad = double(Fa);
+    double Mad = double(Ma);
+    double Sbd = double(Sb);
+    double Ibd = double(Ib);
+    double Lbd = double(Lb);
+    double Nbd = double(Nb);
+    double Jbd = double(Jb);
+    double Fbd = double(Fb);
+    double Mbd = double(Mb);
     if (!δ(Na,Nb)||va!=vb)
         return 0.0;
     if (!(La == HalfInteger(0) && Lb == HalfInteger(0))) {

@@ -18,7 +18,7 @@ namespace state_hamiltonian {
     ) {
         int num_states = basis_states.size();
         for (int i = 0; i < num_states; ++i) for (int j = 0; j < num_states; ++j) {
-            matrix[i, j] += op(basis_states[i], basis_states[j]);
+            matrix(i, j) += op(basis_states[i], basis_states[j]);
         }
     }
     
@@ -30,7 +30,7 @@ namespace state_hamiltonian {
         int num_ops = ops.size();
         // ops should be large in memory, want to loop over it the last.
         for (int k = 0; k < num_states; ++k) for (int i = 0; i < num_states; ++i) for (int j = 0; j < num_states; ++j) {
-            matrix[i, j] += ops[k](basis_states[i], basis_states[j]) * weights[k];
+            matrix(i, j) += ops[k](basis_states[i], basis_states[j]) * weights[k];
         }
     }
 
@@ -47,7 +47,7 @@ namespace state_hamiltonian {
         std::vector<Eigen::MatrixXd> G = {G1m, G0, G1};
         for (int p = -1; p <= 1; ++p) for (int i = 0; i < n_excited_states; ++i) for (int j = 0; j < n_ground_states; ++j) {
             auto TDM = op(A.basis_states[i], X.basis_states[j], p);
-            G[p+1][i, j] = std::abs(TDM) * std::abs(TDM);
+            G[p+1](i, j) = std::abs(TDM) * std::abs(TDM);
         }
         return G;
     }
