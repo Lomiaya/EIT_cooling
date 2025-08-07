@@ -14,6 +14,10 @@ namespace parameters {
 
     constexpr double speed_of_light = 299792458.0;
 
+    constexpr double bohr_magneton = 9.2740100657e-24;
+
+    constexpr double electron_spin_g_factor = 2.0023193043617;
+
 } // namespace parameters
 
 #endif // CONSTANTS_HPP

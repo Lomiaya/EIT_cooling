@@ -8,8 +8,11 @@ int main() {
     HalfInteger zero = HalfInteger(0);
     HalfInteger one = HalfInteger(1);
     HalfInteger two = HalfInteger(2);
-    std::cout << wigner3j(one, one, zero, zero, zero, zero) << std::endl;
-    std::cout << wigner6j(one, one, one, one, one, one) << std::endl;
-    std::cout << wigner9j(one, one, one, two, two, two, one, one, one) << std::endl;
+    HalfInteger three = HalfInteger(3);
+    HalfInteger minusone = HalfInteger(-1);
+    HalfInteger half = HalfInteger::from_twice(1);
+    std::cout << wigner3j(half, half, one, half, half, minusone) << std::endl;
+    std::cout << wigner6j(one, half, half, half, one, one) << std::endl;
+    std::cout << wigner9j(one, one, one, three, three, three, two, two, two) << std::endl;
     return 0;
 }

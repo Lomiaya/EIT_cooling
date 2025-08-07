@@ -57,7 +57,7 @@ std::vector<HundsCaseB_Rot> A_basis_states() {
     HalfInteger S = HalfInteger::from_twice(1);
     HalfInteger I = HalfInteger::from_twice(1);
     HalfInteger L = HalfInteger::from_twice(2); // only half of the correct parity state...
-    HalfInteger N = HalfInteger::from_twice(0);
+    HalfInteger N = HalfInteger::from_twice(2);
     for (int M_ = -1; M_ <= 1; ++M_) {
         HalfInteger J = HalfInteger::from_twice(1);
         HalfInteger F = HalfInteger(1);
@@ -91,6 +91,10 @@ States define_states() {
     X_hamiltonian.add_operators_to_matrix(molecular_params, ops);
 
     Matrix H_ground = X_hamiltonian.get_matrix();
+    auto energies_lowest = get_eigenvalues(H_ground)[0];
+    for (int i = 0; i < n_ground_states; ++i) {
+        H_ground(i,i) -= energies_lowest;
+    }
 
     // excited state
     auto A_state_basis = A_basis_states();

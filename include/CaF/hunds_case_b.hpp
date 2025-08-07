@@ -57,7 +57,6 @@ double Hyperfine_Dipolar(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b);
 
 // Transition Dipole Moment
 double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p);
-double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b);
 
 // Zeeman interactions
 double Zeeman(const HundsCaseB_Rot &a, const HundsCaseB_Rot &b, int p);

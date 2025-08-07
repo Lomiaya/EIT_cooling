@@ -19,7 +19,9 @@ class StateHamiltonian {
         MatrixXc matrix;
         std::vector<hunds_case_b::HundsCaseB_Rot> basis_states;
     public:
-        explicit StateHamiltonian(std::vector<hunds_case_b::HundsCaseB_Rot> states_init) : basis_states(states_init), matrix(MatrixXc(states_init.size(), states_init.size())) {}
+        explicit StateHamiltonian(std::vector<hunds_case_b::HundsCaseB_Rot> states_init) : basis_states(states_init), matrix(MatrixXc(states_init.size(), states_init.size())) {
+            matrix.setZero();
+        }
         MatrixXc get_matrix() const { return matrix; }
         std::vector<hunds_case_b::HundsCaseB_Rot> get_states() const { return basis_states; }
         void add_operator_to_matrix(

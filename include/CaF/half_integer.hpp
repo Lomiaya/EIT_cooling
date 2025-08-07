@@ -11,7 +11,11 @@ private:
 
 public:
     explicit HalfInteger(int numerator = 0) : twice_value(numerator * 2) {}
-    static HalfInteger from_twice(int t) { return HalfInteger(t / 2); }
+    static HalfInteger from_twice(int t) { 
+        HalfInteger res(0);
+        res.twice_value = t;
+        return res;
+    }
 
     int get_twice() const { return twice_value; }
     explicit operator double() const { return static_cast<double>(twice_value) / 2.0; }
@@ -45,7 +49,7 @@ public:
     }
 };
 inline double factorial(HalfInteger x) {
-    double v = static_cast<double>(x);
+    double v = static_cast<int>(x); // Should be integer in all times.
     return std::tgamma(v + 1.0);
 }
 inline int ceiling(HalfInteger x) {

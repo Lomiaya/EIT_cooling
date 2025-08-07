@@ -60,12 +60,12 @@ Params create_params(const States& states) {
 
     params.n_beams = 2;
 
-    int size_D = 20;
+    int size_D = 40;
 
     // Detunings
     DoubleVec D1s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 0.0) / 20.0 * 0.2e6;
+        double delta = (static_cast<double>(i) - 0.0) / 40.0 * 1.0e6;
         double val = 2.0 * parameters::pi * 94.5e6 + 2.0 * parameters::pi * delta;
         D1s(i) = val;
     }
