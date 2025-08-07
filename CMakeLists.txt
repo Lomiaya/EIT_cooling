@@ -23,6 +23,10 @@ set(SOURCE_FILES
     src/stochastic_schrodinger_spin_motion.cpp
     src/atomic_states.cpp
     src/simulation.cpp
+    src/CaF/wigner_symbol.cpp
+    src/CaF/hunds_case_b.cpp
+    src/CaF/state_hamiltonian.cpp
+    src/caf_states.cpp
 )
 
 # Header files (optional: for IDEs and clarity)
@@ -35,6 +39,11 @@ set(HEADER_FILES
     include/define_params.hpp
     include/atomic_states.hpp
     include/simulation.hpp
+    include/CaF/half_integer.hpp
+    include/CaF/hunds_case_b.hpp
+    include/CaF/wigner_symbol.hpp
+    include/CaF/state_hamiltonian.hpp
+    include/caf_states.hpp
 )
 
 # Create static library

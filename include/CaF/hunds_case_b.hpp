@@ -21,10 +21,22 @@ struct HundsCaseB {
 
 // rotational basis struct
 struct HundsCaseB_Rot : HundsCaseB {
-    double       E       = 0.0;
     std::string  label;
     int          v;
     HalfInteger  S, I, Lambda, N, J, F, M;
+
+    HundsCaseB_Rot(
+        std::string label_,
+        int v_,
+        HalfInteger S_,
+        HalfInteger I_,
+        HalfInteger Lambda_,
+        HalfInteger N_,
+        HalfInteger J_,
+        HalfInteger F_,
+        HalfInteger M_
+    ) : label(std::move(label_)), v(v_), S(S_), I(I_), Lambda(Lambda_),
+        N(N_), J(J_), F(F_), M(M_) {}
 };
 
 // unpack helper
@@ -48,9 +60,7 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p);
 double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b);
 
 // Zeeman interactions
-double Zeeman(const HundsCaseB_Rot &a,
-              const HundsCaseB_Rot &b, int p);
-double Zeeman_z(const HundsCaseB_Rot &a,
-                const HundsCaseB_Rot &b);
+double Zeeman(const HundsCaseB_Rot &a, const HundsCaseB_Rot &b, int p);
+double Zeeman_z(const HundsCaseB_Rot &a, const HundsCaseB_Rot &b);
 } // namespace hunds_case_b
 #endif // HUNDS_CASE_B_HPP

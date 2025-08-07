@@ -60,12 +60,12 @@ Params create_params(const States& states) {
 
     params.n_beams = 2;
 
-    int size_D = 13;
+    int size_D = 20;
 
     // Detunings
     DoubleVec D1s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 3.0) / 10.0 * 0.2e6;
+        double delta = (static_cast<double>(i) - 0.0) / 20.0 * 0.2e6;
         double val = 2.0 * parameters::pi * 94.5e6 + 2.0 * parameters::pi * delta;
         D1s(i) = val;
     }
@@ -95,10 +95,10 @@ Params create_params(const States& states) {
     params.omega_x = 2 * parameters::pi * 73e3;
     params.omega_z = 2 * parameters::pi * 10e3;
 
-    params.n_x_max = 3;
+    params.n_x_max = 5;
     params.n_z_max = 1;
 
-    params.n_x_init = 1;
+    params.n_x_init = 2;
     params.n_z_init = 0;
 
     params.mass = 87 * parameters::atomic_unit_weight;

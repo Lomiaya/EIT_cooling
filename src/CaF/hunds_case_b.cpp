@@ -226,4 +226,56 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p) {
 double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     return TDM(a, b, -1) + TDM(a, b, 0) + TDM(a, b, 1);
 }
+
+// Zeeman, only for sigma states!
+double Zeeman(const HundsCaseB_Rot &a, const HundsCaseB_Rot &b, int p) {
+    int va, vb; HalfInteger Sa,Ia,La,Na,Ja,Fa,Ma;
+    HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
+    unpack(a, va, Sa, Ia, La, Na, Ja, Fa, Ma);
+    unpack(b, vb, Sb, Ib, Lb, Nb, Jb, Fb, Mb);
+    double Sad, Iad, Lad, Nad, Jad, Fad, Mad, Sbd, Ibd, Lbd, Nbd, Jbd, Fbd, Mbd = 
+    double(Sa), double(Ia), double(La), double(Na), double(Ja), double(Fa), double(Ma), 
+    double(Sb), double(Ib), double(Lb), double(Nb), double(Jb), double(Fb), double(Mb);
+    if (!δ(Na,Nb)||va!=vb)
+        return 0.0;
+    if (!(La == HalfInteger(0) && Lb == HalfInteger(0))) {
+        std::cout << "Invalid La or Lb, should be both zero in Zeeman: " << La << " " << Lb << std::endl;
+        return 0.0;
+    }
+    
+    int phase1_ = (Fb - Mb).get_twice();
+    if (phase1_ % 2 != 0) {
+        std::cout << "Invalid (Fb, Mb) in Hyperfine_IS: " << Fb << " " << Mb << std::endl;
+        return 0.0; // should never happen
+    }
+    phase1_ /= 2;
+    double phase1 = (phase1_ % 2 == 1? -1.0: 1.0);
+    int phase2_ = (Jb + Ia + Fa + HalfInteger(1)).get_twice();
+    if (phase2_ % 2 != 0) {
+        std::cout << "Invalid (Jb, Ia, Fa) in Hyperfine_IS: " << Jb << " " << Ia << " " << Fa << std::endl;
+        return 0.0; // should never happen
+    }
+    phase2_ /= 2;
+    double phase2 = (phase2_ % 2 == 1? -1.0: 1.0);
+    int phase3_ = (Na + Sa + Jb + HalfInteger(1)).get_twice();
+    if (phase3_ % 2 != 0) {
+        std::cout << "Invalid (Na, Sa, Jb) in Hyperfine_IS: " << Na << " " << Sa << " " << Jb << std::endl;
+        return 0.0; // should never happen
+    }
+    phase3_ /= 2;
+    double phase3 = (phase3_ % 2 == 1? -1.0: 1.0);
+
+    return (p % 2 == 1? -1.0: 1.0) * phase1 * phase2 * phase3 *
+           sqrt(
+                (2 * Fad + 1) * (2 * Fbd + 1) *
+                (2 * Jad + 1) * (2 * Jbd + 1) *
+                Sad * (Sad + 1) * (2 * Sad + 1)
+            ) *
+            wigner3j(Fb, HalfInteger(1), Fa, -Mb, HalfInteger(-p), Ma) *
+            wigner6j(Jb, Fb, Ia, Fa, Ja, HalfInteger(1)) *
+            wigner6j(Sa, Jb, Na, Ja, Sa, HalfInteger(1));
+}
+double Zeeman_z(const HundsCaseB_Rot &a, const HundsCaseB_Rot &b) {
+    return Zeeman(a, b, 0);
+}
 } // namespace hunds_case_b
