@@ -112,7 +112,7 @@ States define_states() {
 
     std::vector<Eigen::MatrixXd> G = { 2 * G_tot * G_pre[0], 2 * G_tot * G_pre[1], 2 * G_tot * G_pre[2] };
 
-    std::array<double, 3> B_direction = {std::sqrt(2.0), 0.0, std::sqrt(2.0)};
+    std::array<double, 3> B_direction = {0.0, 0.0, 1.0};
 
     double transition_lambda = 606e-9;
 
@@ -166,10 +166,10 @@ Params create_params(const States& states) {
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << std::sqrt(2.0), 0.0, -std::sqrt(2.0),  std::sqrt(2.0), 0.0, std::sqrt(2.0);
+    params.k << 1.0, 0.0, 0.0,  0.0, 0.0, 1.0;
 
-    params.omega_x = 2 * parameters::pi * 73e3;
-    params.omega_z = 2 * parameters::pi * 10e3;
+    params.omega_x = 2 * parameters::pi * 100e3;
+    params.omega_z = 2 * parameters::pi * 15e3;
 
     params.n_x_max = 5;
     params.n_z_max = 1;
@@ -177,7 +177,7 @@ Params create_params(const States& states) {
     params.n_x_init = 2;
     params.n_z_init = 0;
 
-    params.mass = 87 * parameters::atomic_unit_weight;
+    params.mass = 59 * parameters::atomic_unit_weight;
 
     return params;
 }
