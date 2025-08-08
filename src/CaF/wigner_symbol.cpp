@@ -35,11 +35,11 @@ double wigner3j(HalfInteger j1, HalfInteger j2, HalfInteger j3,
         if (t_min <= t_max) {
             double sum = 0.0;
             for (int ti = t_min; ti <= t_max; ++ti) {
-                double term = ((ti % 2) == 1 ? -1 : 1) / x_term(HalfInteger(ti), j1, j2, j3, m1, m2);
+                double term = ((ti % 2) == 0 ? 1 : -1) / x_term(HalfInteger(ti), j1, j2, j3, m1, m2);
                 sum += term;
             }
             int parity_ = int(j1 - j2 - m3);
-            int parity = ((parity_ % 2) == 1 ? -1 : 1);
+            int parity = ((parity_ % 2) == 0 ? 1 : -1);
             double multiplier = Delta(j1, j2, j3) * factorial(j1+m1) * factorial(j1-m1) * factorial(j2+m2) * factorial(j2-m2) * factorial(j3+m3) * factorial(j3-m3);
             value = sum * parity
                   * sqrt(multiplier);

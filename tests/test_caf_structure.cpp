@@ -2,6 +2,7 @@
 #include "caf_states.hpp"
 #include "define_params.hpp"
 #include "state_hamiltonian.hpp"
+#include "hunds_case_b.hpp"
 
 int main() {
     define_params::States states = caf_states::define_states();
@@ -15,5 +16,9 @@ int main() {
     for (auto& Gi: G) {
         std::cout << Gi / states.G_tot << std::endl;
     }
+    auto X_states = caf_states::X_basis_states();
+    auto state_a = X_states[3];
+    auto state_b = X_states[3];
+    std::cout << hunds_case_b::SpinRotation(state_a, state_b) << std::endl;
     return 0;
 }

@@ -84,9 +84,10 @@ States define_states() {
     auto X_hamiltonian = StateHamiltonian(X_state_basis);
 
     // parameters; B, D, gamma, bF, c
-    std::vector<double> molecular_params = {10303.988 * 1e6, 0.014060 * 1e6, 39.65891 * 1e6, 122.5569 * 1e6, 40.1190 * 1e6};
+    std::vector<double> molecular_params = {10303.988 * 1e6, 0.014060 * 1e6, 39.65891 * 1e6, 122.5569 * 1e6, 40.1190 * 1e6 / 3, 
+                        (parameters::electron_spin_g_factor * parameters::bohr_magneton / parameters::plancks_constant) * 0e-4}; // B-field in Gauss
     std::vector<double (*)(const HundsCaseB_Rot&, const HundsCaseB_Rot&)> ops = 
-    {Rotation, RotationDistortion, SpinRotation, Hyperfine_IS, Hyperfine_Dipolar};
+    {Rotation, RotationDistortion, SpinRotation, Hyperfine_IS, Hyperfine_Dipolar, Zeeman_z};
 
     X_hamiltonian.add_operators_to_matrix(molecular_params, ops);
 

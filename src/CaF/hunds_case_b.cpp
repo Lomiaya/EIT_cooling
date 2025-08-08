@@ -24,7 +24,7 @@ void unpack(const HundsCaseB_Rot& s,
 
 bool δ(HalfInteger a, HalfInteger b) { return a == b; }
 
-// Rotation
+// Rotation, not tested
 double Rotation(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     int va, vb; HalfInteger Sa,Ia,La,Na,Ja,Fa,Ma;
     HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
@@ -37,7 +37,7 @@ double Rotation(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     return Na_double*(Na_double+1) - La_double*La_double;
 }
 
-// RotationDistortion
+// RotationDistortion, not tested
 double RotationDistortion(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     double r = Rotation(a,b);
     return -r * r;
@@ -71,29 +71,32 @@ double SpinRotation(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
         return 0.0; // should never happen
     }
     phase_ /= 2;
-    double phase = (phase_ % 2 == 1? -1.0: 1.0);
+    double phase = (phase_ % 2 == 0? 1.0: -1.0);
     int phase2_ = (Na - La).get_twice();
     if (phase2_ % 2 != 0) {
         std::cout << "Invalid (Na, La) in SpinRotation: " << Na << " " << La << std::endl;
         return 0.0; // should never happen
     }
     phase2_ /= 2;
-    double phase2 = (phase2_ % 2 == 1? -1.0: 1.0);
+    double phase2 = (phase2_ % 2 == 0? 1.0: -1.0);
     double pref = 0.5 * sqrt(Sad * (Sad + 1) * (2 * Sad + 1) * (2 * Nad + 1) * (2 * Nbd + 1));
     double wg6j = wigner6j(Nb, Sa, Ja, Sa, Na, HalfInteger(1));
     double sum = 0.0;
     for (int k = 0; k <= 2; ++k) for (int q = -1; q <= 1; ++q) {
         double mult_phase = (k % 2 == 1)? -1.0: 1.0;
-        double mult_pref = sqrt(Nbd * (Nbd + 1) * (2 * Nbd + 1) * Nad * (Nad + 1) * (2 * Nad + 1));
-        sum += mult_phase * mult_pref * 
-        wigner6j(HalfInteger(1), HalfInteger(1), HalfInteger(k), Na, Nb, Nb) * 
-        wigner6j(HalfInteger(1), HalfInteger(1), HalfInteger(k), Nb, Na, Na) * 
+        double mult_pref1 = sqrt(Nbd * (Nbd + 1) * (2 * Nbd + 1));
+        double mult_pref2 = sqrt(Nad * (Nad + 1) * (2 * Nad + 1));
+        sum += sqrt(2 * k + 1) *
+        (
+            wigner6j(HalfInteger(1), HalfInteger(1), HalfInteger(k), Na, Nb, Nb) * mult_pref1 * mult_phase +
+            wigner6j(HalfInteger(1), HalfInteger(1), HalfInteger(k), Nb, Na, Na) * mult_pref2
+        ) * 
         wigner3j(Na, HalfInteger(k), Nb, -La, HalfInteger(q), Lb) * T_Case_B[q+1][k];
     }
     return phase * phase2 * pref * wg6j * sum;
 }
 
-// Hyperfine_IS
+// Hyperfine_IS, check
 double Hyperfine_IS(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     int va, vb; HalfInteger Sa,Ia,La,Na,Ja,Fa,Ma;
     HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
@@ -121,14 +124,14 @@ double Hyperfine_IS(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
         return 0.0; // should never happen
     }
     phase_ /= 2;
-    double phase = (phase_ % 2 == 1? -1.0: 1.0);
+    double phase = (phase_ % 2 == 0? 1.0: -1.0);
     int phase2_ = (Jb + Ia + Fb + HalfInteger(1)).get_twice();
     if (phase2_ % 2 != 0) {
         std::cout << "Invalid (Jb, Ia, Fb) in Hyperfine_IS: " << Jb << " " << Ia << " " << Fb << std::endl;
         return 0.0; // should never happen
     }
     phase2_ /= 2;
-    double phase2 = (phase2_ % 2 == 1? -1.0: 1.0);
+    double phase2 = (phase2_ % 2 == 0? 1.0: -1.0);
     double pref = sqrt((2 * Jbd + 1) * (2 * Jad + 1) * 
                        Sad * (Sad + 1) * (2 * Sad + 1) *
                        Iad * (Iad + 1) * (2 * Iad + 1));
@@ -165,14 +168,14 @@ double Hyperfine_Dipolar(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
         return 0.0; // should never happen
     }
     phase_ /= 2;
-    double phase = (phase_ % 2 == 1? -1.0: 1.0);
+    double phase = (phase_ % 2 == 0? 1.0: -1.0);
     int phase2_ = (Jb + Ia + Fa + HalfInteger(1)).get_twice();
     if (phase2_ % 2 != 0) {
         std::cout << "Invalid (Jb, Ia, Fa) in Hyperfine_IS: " << Jb << " " << Ia << " " << Fa << std::endl;
         return 0.0; // should never happen
     }
     phase2_ /= 2;
-    double phase2 = (phase2_ % 2 == 1? -1.0: 1.0);
+    double phase2 = (phase2_ % 2 == 0? 1.0: -1.0);
     double pref = sqrt((2 * Jbd + 1) * (2 * Jad + 1) * 
                        (2 * Nbd + 1) * (2 * Nad + 1) *
                        Sad * (Sad + 1) * (2 * Sad + 1) *
@@ -228,7 +231,7 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p) {
         return 0.0; // should never happen
     }
     phase1_ /= 2;
-    double phase1 = (phase1_ % 2 == 1? -1.0: 1.0);
+    double phase1 = (phase1_ % 2 == 0? 1.0: -1.0);
     double m1 = phase1 *
                 wigner3j(Fa, HalfInteger(1), Fb, -Ma, HalfInteger(-p), Mb);
     // m2
@@ -238,7 +241,7 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p) {
         return 0.0; // should never happen
     }
     phase2_ /= 2;
-    double phase2 = (phase2_ % 2 == 1? -1.0: 1.0);
+    double phase2 = (phase2_ % 2 == 0? 1.0: -1.0);
     double m2 = phase2 *
                 sqrt((2 * Fad + 1) * (2 * Fbd + 1)) *
                 wigner6j(Jb, Fb, Ia, Fa, Ja, HalfInteger(1));
@@ -249,7 +252,7 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p) {
         return 0.0; // should never happen
     }
     phase3_ /= 2;
-    double phase3 = (phase3_ % 2 == 1? -1.0: 1.0);
+    double phase3 = (phase3_ % 2 == 0? 1.0: -1.0);
     double m3 = phase3 *
                 sqrt((2 * Jad + 1) * (2 * Jbd + 1)) *
                 wigner6j(Nb, Jb, Sa, Ja, Na, HalfInteger(1));
@@ -260,7 +263,7 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p) {
         return 0.0; // should never happen
     }
     phase4_ /= 2;
-    double phase4 = (phase4_ % 2 == 1? -1.0: 1.0);
+    double phase4 = (phase4_ % 2 == 0? 1.0: -1.0);
     double m4 = phase4 *
                 sqrt((2 * Nad + 1) * (2 * Nbd + 1)) *
                 wigner3j(Na, HalfInteger(1), Nb, -La, HalfInteger(q), Lb);
@@ -303,23 +306,23 @@ double Zeeman(const HundsCaseB_Rot &a, const HundsCaseB_Rot &b, int p) {
         return 0.0; // should never happen
     }
     phase1_ /= 2;
-    double phase1 = (phase1_ % 2 == 1? -1.0: 1.0);
+    double phase1 = (phase1_ % 2 == 0? 1.0: -1.0);
     int phase2_ = (Jb + Ia + Fa + HalfInteger(1)).get_twice();
     if (phase2_ % 2 != 0) {
         std::cout << "Invalid (Jb, Ia, Fa) in Hyperfine_IS: " << Jb << " " << Ia << " " << Fa << std::endl;
         return 0.0; // should never happen
     }
     phase2_ /= 2;
-    double phase2 = (phase2_ % 2 == 1? -1.0: 1.0);
+    double phase2 = (phase2_ % 2 == 0? 1.0: -1.0);
     int phase3_ = (Na + Sa + Jb + HalfInteger(1)).get_twice();
     if (phase3_ % 2 != 0) {
         std::cout << "Invalid (Na, Sa, Jb) in Hyperfine_IS: " << Na << " " << Sa << " " << Jb << std::endl;
         return 0.0; // should never happen
     }
     phase3_ /= 2;
-    double phase3 = (phase3_ % 2 == 1? -1.0: 1.0);
+    double phase3 = (phase3_ % 2 == 0? 1.0: -1.0);
 
-    return (p % 2 == 1? -1.0: 1.0) * phase1 * phase2 * phase3 *
+    return (p % 2 == 0? 1.0: -1.0) * phase1 * phase2 * phase3 *
            sqrt(
                 (2 * Fad + 1) * (2 * Fbd + 1) *
                 (2 * Jad + 1) * (2 * Jbd + 1) *

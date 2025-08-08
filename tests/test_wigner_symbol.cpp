@@ -11,7 +11,7 @@ int main() {
     HalfInteger three = HalfInteger(3);
     HalfInteger minusone = HalfInteger(-1);
     HalfInteger half = HalfInteger::from_twice(1);
-    std::cout << wigner3j(half, half, one, half, half, minusone) << std::endl;
+    std::cout << wigner3j(one, two, one, zero, zero, zero) << std::endl;
     std::cout << wigner6j(one, half, half, half, one, one) << std::endl;
     std::cout << wigner9j(one, one, one, three, three, three, two, two, two) << std::endl;
     return 0;
