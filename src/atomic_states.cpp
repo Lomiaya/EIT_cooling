@@ -66,11 +66,11 @@ Params create_params(const States& states) {
     DoubleVec D1s(size_D);
     for (int i = 0; i < size_D; ++i) {
         double delta = (static_cast<double>(i) - 0.0) / 10.0 * 0.5e6;
-        double val = 2.0 * parameters::pi * 94.5e6 + 2.0 * parameters::pi * delta;
+        double val = - 2.0 * parameters::pi * 94.5e6 - 2.0 * parameters::pi * delta;
         D1s(i) = val;
     }
 
-    double D2 = 2.0 * parameters::pi * 94.5e6 - states.H_ground(1,1).real(); // this is blue detuning!
+    double D2 = - 2.0 * parameters::pi * 94.5e6 - states.H_ground(1,1).real(); // this is blue detuning!
     DoubleMat D(size_D,params.n_beams);
     int i = 0;
     for (const auto& D1 : D1s) {

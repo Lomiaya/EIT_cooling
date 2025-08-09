@@ -268,8 +268,6 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p) {
                 sqrt((2 * Nad + 1) * (2 * Nbd + 1)) *
                 wigner3j(Na, HalfInteger(1), Nb, -La, HalfInteger(q), Lb);
 
-    std::cout << m1 << " " << m2 << " " << m3 << " " << m4 << std::endl; 
-    std::cout << -La << " " << q << " " << Lb << std::endl; 
     return m1 * m2 * m3 * m4;
 }
 
