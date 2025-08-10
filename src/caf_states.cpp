@@ -139,42 +139,50 @@ Params create_params(const States& states) {
     auto energies = get_eigenvalues(states.H_ground);
     auto gamma = states.G_tot;
 
-    params.n_beams = 3;
+    params.n_beams = 4;
 
     int size_D = 20;
 
     // Detunings
 
-    double D1 = gamma * 9 - energies[7]; // 9gamma detuning from F=2
+    double D1 = gamma * 4.5 - energies[7]; // 4.5gamma detuning from F=2
 
     DoubleVec D2s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 0.0) / 20.0 * 200e3;
-        double val = 2.0 * parameters::pi * delta + gamma * 9 - energies[4]; // 9gamma detuning from F=1+
+        double delta = (static_cast<double>(i) - 0.0) / 20.0 * 1000e3;
+        double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[4]; // 4.5gamma detuning from F=1+
+        // double val = 2.0 * parameters::pi * delta - energies[4]; // 0gamma detuning from F=1+
         D2s(i) = val;
     }
     double D3 = gamma * 4.5 - energies[3]; // 4.5gamma detuning from F=0
+
+    DoubleVec D4s(size_D);
+    for (int i = 0; i < size_D; ++i) {
+        double delta = (static_cast<double>(i) - 0.0) / 20.0 * 1000e3;
+        double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[7];
+        D4s(i) = val;
+    }
     DoubleMat D(size_D,params.n_beams);
-    int i = 0;
-    for (const auto& D2 : D2s) {
+    for (int i = 0; i < size_D; ++i) {
         D(i,0) = D1;
-        D(i,1) = D2;
+        D(i,1) = D2s[i];
         D(i,2) = D3;
-        i += 1;
+        D(i,3) = D4s[i];
     }
     params.D = D; // this is blue detuning!
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 400.0, 25.0, 100.0;
+    // params.I << 400.0, 25.0, 100.0, 25.0;
+    params.I << 1000.0, 50.0, 200.0, 50.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
-    params.s << 0.995, 0.0, 0.1,  0.0, 1.0, 0.0,  0.0, 1.0, 0.0;
+    params.s << 1.0, 0.0, 0.0,  0.0, 1.0, 0.0,  0.0, 1.0, 0.0,  0.0, 0.0, 1.0;
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << 0.0, 0.0, 1.0,  1.0, 0.0, 0.0,  -1.0, 0.0, 0.0;
+    params.k << 0.0, 0.0, 1.0,  1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  0.0, 0.0, -1.0;
 
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;

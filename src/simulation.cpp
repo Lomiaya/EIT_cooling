@@ -137,6 +137,7 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             cout << "Total jumps: " << jumps << endl;
             cout << "Resulting heat x: " << nx_over_t[nx_over_t.size() - 1] << endl;
             cout << "Resulting heat z: " << nz_over_t[nz_over_t.size() - 1] << endl;
+            cout << "Resulting psi:" << psi_final << endl;
 
             auto t1 = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = t1 - t0;
