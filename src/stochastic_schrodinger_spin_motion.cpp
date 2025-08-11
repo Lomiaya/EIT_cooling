@@ -258,7 +258,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
     int num_keys)
 {
     const size_t N = num_keys;   // Number of consumer threads & loops per thread
-    const size_t M = 5;   // Number of producer threads
+    const size_t M = 10;   // Number of producer threads
     const size_t stash_capacity = 100;   // Stash capacity
 
     std::queue<std::tuple<MatrixXc, size_t, size_t>> stash;
@@ -297,7 +297,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
                 cv_produce.wait(lock, [&]() { return idx == next_expected_idx && stash.size() < stash_capacity; });
                 stash.emplace(d, 0, idx);  // stash maintains insertion order
                 ++next_expected_idx;
-                lock.unlock(); // not really needed.
+                lock.unlock();
 
                 if (idx % per_log_step == 0) {
                     std::cout << "Produced element " << idx << " by producer "
@@ -327,7 +327,7 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
                     lock.unlock();
 
                     // Process the data
-                    state = step(state, d).first;
+                    state = step(state, d).first; // actively process data since d might be freed after stash.pop().
                 }
 
                 {
@@ -336,9 +336,6 @@ std::tuple<VectorXc, double, VecD, VecD> solve(
 
                     auto& [d, count, idx] = stash.front();
                     ++count;
-
-                    // std::cout << "Tagged off element " << idx << ", " << i << " by consumer "
-                    //         << std::this_thread::get_id() << std::endl;
 
                     if (count == N) {
                         stash.pop();

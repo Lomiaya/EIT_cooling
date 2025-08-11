@@ -149,16 +149,15 @@ Params create_params(const States& states) {
 
     DoubleVec D2s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 0.0) / 20.0 * 1000e3;
+        double delta = (static_cast<double>(i) - 10.0) / 10.0 * 400e3;
         double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[4]; // 4.5gamma detuning from F=1+
-        // double val = 2.0 * parameters::pi * delta - energies[4]; // 0gamma detuning from F=1+
         D2s(i) = val;
     }
     double D3 = gamma * 4.5 - energies[3]; // 4.5gamma detuning from F=0
 
     DoubleVec D4s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 0.0) / 20.0 * 1000e3;
+        double delta = (static_cast<double>(i) - 10.0) / 10.0 * 400e3;
         double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[7];
         D4s(i) = val;
     }
@@ -187,10 +186,10 @@ Params create_params(const States& states) {
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
 
-    params.n_x_max = 1;
+    params.n_x_max = 5;
     params.n_z_max = 1;
 
-    params.n_x_init = 0;
+    params.n_x_init = 2;
     params.n_z_init = 0;
 
     params.mass = 59 * parameters::atomic_unit_weight;
