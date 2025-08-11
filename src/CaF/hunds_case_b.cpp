@@ -22,7 +22,7 @@ void unpack(const HundsCaseB_Rot& s,
     N = s.N;  J = s.J;  F = s.F;  M = s.M;
 }
 
-bool δ(HalfInteger a, HalfInteger b) { return a == b; }
+bool delta(HalfInteger a, HalfInteger b) { return a == b; }
 
 // Rotation, not tested
 double Rotation(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
@@ -30,7 +30,7 @@ double Rotation(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     HalfInteger Sb,Ib,Lb,Nb,Jb,Fb,Mb;
     unpack(a, va, Sa, Ia, La, Na, Ja, Fa, Ma);
     unpack(b, vb, Sb, Ib, Lb, Nb, Jb, Fb, Mb);
-    if (!δ(La,Lb)||!δ(Na,Nb)||!δ(Ja,Jb)||!δ(Fa,Fb)||!δ(Ma,Mb)||va!=vb)
+    if (!delta(La,Lb)||!delta(Na,Nb)||!delta(Ja,Jb)||!delta(Fa,Fb)||!delta(Ma,Mb)||va!=vb)
         return 0.0;
     double Na_double = double(Na);
     double La_double = double(La);
@@ -63,7 +63,7 @@ double SpinRotation(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     double Jbd = double(Jb);
     double Fbd = double(Fb);
     double Mbd = double(Mb);
-    if (!δ(Ja,Jb)||!δ(Fa,Fb)||!δ(Ma,Mb)||va!=vb)
+    if (!delta(Ja,Jb)||!delta(Fa,Fb)||!delta(Ma,Mb)||va!=vb)
         return 0.0;
     int phase_ = (Jb + Sa + Na).get_twice();
     if (phase_ % 2 != 0) {
@@ -116,7 +116,7 @@ double Hyperfine_IS(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     double Jbd = double(Jb);
     double Fbd = double(Fb);
     double Mbd = double(Mb);
-    if (!δ(La,Lb)||!δ(Na,Nb)||!δ(Fa,Fb)||!δ(Ma,Mb)||va!=vb)
+    if (!delta(La,Lb)||!delta(Na,Nb)||!delta(Fa,Fb)||!delta(Ma,Mb)||va!=vb)
         return 0.0;
     int phase_ = (Nb + Sa + Ja).get_twice();
     if (phase_ % 2 != 0) {
@@ -160,7 +160,7 @@ double Hyperfine_Dipolar(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b) {
     double Jbd = double(Jb);
     double Fbd = double(Fb);
     double Mbd = double(Mb);
-    if (!δ(Fa,Fb)||!δ(Ma,Mb)||va!=vb)
+    if (!delta(Fa,Fb)||!delta(Ma,Mb)||va!=vb)
         return 0.0;
     int phase_ = (Na - La).get_twice();
     if (phase_ % 2 != 0) {
@@ -207,7 +207,7 @@ double TDM(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b, int p) {
     double Jbd = double(Jb);
     double Fbd = double(Fb);
     double Mbd = double(Mb);
-    if (!δ(Ia,Ib)||!δ(Sa,Sb))
+    if (!delta(Ia,Ib)||!delta(Sa,Sb))
         return 0.0;
     HalfInteger q_ = La - Lb;
     int doubleq = q_.get_twice();
@@ -291,7 +291,7 @@ double Zeeman(const HundsCaseB_Rot &a, const HundsCaseB_Rot &b, int p) {
     double Jbd = double(Jb);
     double Fbd = double(Fb);
     double Mbd = double(Mb);
-    if (!δ(Na,Nb)||va!=vb)
+    if (!delta(Na,Nb)||va!=vb)
         return 0.0;
     if (!(La == HalfInteger(0) && Lb == HalfInteger(0))) {
         std::cout << "Invalid La or Lb, should be both zero in Zeeman: " << La << " " << Lb << std::endl;

@@ -46,7 +46,7 @@ void unpack(const HundsCaseB_Rot& s,
             HalfInteger& J, HalfInteger& F, HalfInteger& M);
 
 // delta equality
-bool δ(HalfInteger a, HalfInteger b);
+bool delta(HalfInteger a, HalfInteger b);
 
 // matrix‐elements
 double Rotation(const HundsCaseB_Rot& a, const HundsCaseB_Rot& b);
