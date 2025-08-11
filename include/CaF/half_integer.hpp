@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <cmath>
 
 namespace half_integer {
 class HalfInteger {
