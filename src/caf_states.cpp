@@ -157,7 +157,8 @@ Params create_params(const States& states) {
 
     DoubleVec D4s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 10.0) / 10.0 * 400e3;
+        // double delta = (static_cast<double>(i) - 10.0) / 10.0 * 400e3;
+        double delta = 100e3;
         double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[7];
         D4s(i) = val;
     }
