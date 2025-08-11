@@ -67,7 +67,7 @@ if (MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(quantum_core PRIVATE "/Ox")
 endif()
 
-if (UNIX AND CMAKE_BUILD_TYPE STREQUAL "Release")
+if (UNIX)
     target_compile_options(quantum_core PRIVATE -DNDEBUG)
     target_compile_options(quantum_core PRIVATE -O3)
     find_package(Threads REQUIRED)
