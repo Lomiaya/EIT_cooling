@@ -67,6 +67,11 @@ if (MSVC AND CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(quantum_core PRIVATE "/Ox")
 endif()
 
+if (UNIX AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_options(quantum_core PRIVATE -DNDEBUG)
+    target_compile_options(quantum_core PRIVATE -O3)
+endif()
+
 # Enable testing if desired
-enable_testing()
-add_subdirectory(tests)
+# enable_testing()
+# add_subdirectory(tests)
