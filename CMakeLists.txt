@@ -71,7 +71,7 @@ if (UNIX)
     target_compile_options(quantum_core PRIVATE -DNDEBUG)
     target_compile_options(quantum_core PRIVATE -O3)
     find_package(Threads REQUIRED)
-    target_link_libraries(your_target PRIVATE Threads::Threads)
+    target_link_libraries(quantum_core PRIVATE Threads::Threads)
 endif()
 
 # Enable testing if desired
