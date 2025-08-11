@@ -70,7 +70,8 @@ endif()
 if (UNIX AND CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(quantum_core PRIVATE -DNDEBUG)
     target_compile_options(quantum_core PRIVATE -O3)
-    target_compile_options(quantum_core PRIVATE -pthread)
+    find_package(Threads REQUIRED)
+    target_link_libraries(your_target PRIVATE Threads::Threads)
 endif()
 
 # Enable testing if desired
