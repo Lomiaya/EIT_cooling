@@ -73,7 +73,7 @@ std::vector<HundsCaseB_Rot> A_basis_states() {
     return basis;
 }
 
-States define_states() {
+States define_states(double B_field) {
     int n_excited_states = 4;
     int n_ground_states = 12;
 
@@ -85,7 +85,7 @@ States define_states() {
 
     // parameters; B, D, gamma, bF, c
     std::vector<double> molecular_params = {10303.988 * 1e6, 0.014060 * 1e6, 39.65891 * 1e6, 122.5569 * 1e6, 40.1190 * 1e6 / 3, 
-                        (parameters::electron_spin_g_factor * parameters::bohr_magneton / parameters::plancks_constant) * 0e-4}; // B-field in Gauss
+                        (parameters::electron_spin_g_factor * parameters::bohr_magneton / parameters::plancks_constant) * B_field * 1.0e-4}; // B-field in Gauss
 
     for (auto& param: molecular_params) {
         param *= 2 * parameters::pi;
@@ -116,7 +116,7 @@ States define_states() {
 
     std::vector<Eigen::MatrixXd> G = { 2 * G_tot * G_pre[0], 2 * G_tot * G_pre[1], 2 * G_tot * G_pre[2] };
 
-    std::array<double, 3> B_direction = {0.0, 0.0, 1.0};
+    std::array<double, 3> B_direction = {1.0, 0.0, 0.0};
 
     double transition_lambda = 606e-9;
 
@@ -139,50 +139,37 @@ Params create_params(const States& states) {
     auto energies = get_eigenvalues(states.H_ground);
     auto gamma = states.G_tot;
 
-    params.n_beams = 4;
+    params.n_beams = 3;
 
-    int size_D = 20;
+    int size_D = 1;
 
     // Detunings
 
     double D1 = gamma * 4.5 - energies[7]; // 4.5gamma detuning from F=2
 
-    DoubleVec D2s(size_D);
-    for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 10.0) / 10.0 * 400e3;
-        double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[4]; // 4.5gamma detuning from F=1+
-        D2s(i) = val;
-    }
     double D3 = gamma * 4.5 - energies[3]; // 4.5gamma detuning from F=0
 
-    DoubleVec D4s(size_D);
-    for (int i = 0; i < size_D; ++i) {
-        // double delta = (static_cast<double>(i) - 10.0) / 10.0 * 400e3;
-        double delta = 100e3;
-        double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[7];
-        D4s(i) = val;
-    }
     DoubleMat D(size_D,params.n_beams);
     for (int i = 0; i < size_D; ++i) {
         D(i,0) = D1;
-        D(i,1) = D2s[i];
-        D(i,2) = D3;
-        D(i,3) = D4s[i];
+        D(i,1) = D1;
+        D(i,4) = D3;
     }
     params.D = D; // this is blue detuning!
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    // params.I << 400.0, 25.0, 100.0, 25.0;
-    params.I << 1000.0, 50.0, 200.0, 50.0;
+    params.I << 500.0, 500.0, 200.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
-    params.s << 1.0, 0.0, 0.0,  0.0, 1.0, 0.0,  0.0, 1.0, 0.0,  0.0, 0.0, 1.0;
+    params.s << 0.224 * Complex(0,1), 0.224, 0.949,  0.224 * Complex(0,1), 0.224, 0.949,
+                0.0, 1.0, 0.0;
 
-    // Wave vectors
+    // Wave vectors, do not include y direction, combine it with x direction.
     params.k = DoubleMat(params.n_beams,3);
-    params.k << 0.0, 0.0, 1.0,  1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  0.0, 0.0, -1.0;
+    params.k << 0.916, 0.0, 0.400,  -0.916, 0.0, -0.400,
+                1.0, 0.0, 0.0; // actually 0.0, 1.0, 0.0
 
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
@@ -190,7 +177,7 @@ Params create_params(const States& states) {
     params.n_x_max = 5;
     params.n_z_max = 1;
 
-    params.n_x_init = 2;
+    params.n_x_init = 3;
     params.n_z_init = 0;
 
     params.mass = 59 * parameters::atomic_unit_weight;

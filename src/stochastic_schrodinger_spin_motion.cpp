@@ -202,7 +202,6 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
     psi = expH * psi;
     psi.normalize();
 
-    // double jump_prob = (psi.adjoint() * K * psi)[0,0].real() * dt;
     double jump_prob = psi.tail(psi.size() - n_g * n_x * n_z).squaredNorm() * G_tot * dt;
     std::vector<double> probs_jump = {jump_prob, 1 - jump_prob};
     std::discrete_distribution<> dist_jump(probs_jump.begin(), probs_jump.end());

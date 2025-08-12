@@ -19,11 +19,15 @@ void write_to_file(std::string file_name, const Eigen::MatrixXd& data) {
 }
 
 int main() {
-    States states = define_states();
-    Params params = create_params(states);
-    auto [tot_jumps, avg_tempsx, avg_tempsz] = simulation::simulate(params, states, 5000001, 1000e-6, 10);
-    write_to_file("./tot_jumps.txt", tot_jumps);
-    write_to_file("./avg_tempsx.txt", avg_tempsx);
-    write_to_file("./avg_tempsz.txt", avg_tempsz);
+    for (int i = 0; i < 10; ++i) {
+        std::cout << "Running simulation, B = " << (i-2.0) / 10.0 << "G..." << std::endl;
+        States states = define_states((i-2.0) / 10.0); // Vary B-field from -0.2 to 0.7 Gauss
+        Params params = create_params(states);
+        // auto [tot_jumps, avg_tempsx, avg_tempsz] = simulation::simulate(params, states, 1000001, 200e-6, 10);
+        auto [tot_jumps, avg_tempsx, avg_tempsz] = simulation::simulate(params, states, 1000001, 200e-6, 10);
+        write_to_file("./tot_jumps.txt", tot_jumps);
+        write_to_file("./avg_tempsx.txt", avg_tempsx);
+        write_to_file("./avg_tempsz.txt", avg_tempsz);
+    }
     return 0;
 }

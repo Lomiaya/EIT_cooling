@@ -17,7 +17,7 @@ using namespace define_params;
 
 std::vector<hunds_case_b::HundsCaseB_Rot> X_basis_states();
 std::vector<hunds_case_b::HundsCaseB_Rot> A_basis_states();
-States define_states();
+States define_states(double B_field);
 Params create_params(const States& states);
 } // namespace caf_states
 
