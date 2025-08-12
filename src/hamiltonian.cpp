@@ -39,7 +39,7 @@ States diagonalize_hamiltonian(const States& states) {
 
 ComplexVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params) {
     int n_states = H.rows();
-    ComplexVec hamiltonian(n_states * n_x_max * n_z_max);
+    ComplexVec hamiltonian = ComplexVec::Zero(n_states * n_x_max * n_z_max);
     for (int i = 0; i < n_states; ++i) {
         for (int j = 0; j < n_x_max; ++j) {
             for (int k = 0; k < n_z_max; ++k) {
@@ -137,8 +137,8 @@ ComplexMat V_minus(const States& states,
 {
     int n_excited_states = states.n_excited_states;
     int n_ground_states = states.n_ground_states;
-    ComplexMat V_minus_total(n_ground_states * params.n_x_max * params.n_z_max,
-                             n_excited_states * params.n_x_max * params.n_z_max);
+    ComplexMat V_minus_total = ComplexMat::Zero(n_ground_states * params.n_x_max * params.n_z_max,
+                                                n_excited_states * params.n_x_max * params.n_z_max);
     
     for (int f = 0; f < params.n_beams; ++f) {
         ComplexMat V_minus_f = define_V_minus(states, params, f, I_index, D_index);
@@ -158,8 +158,8 @@ ComplexMat build_W(const States& states,
     // Where H_NH(f, l)^{-1}(e, e) = 1 / (H_excited(e, e) - (i/2) G_tot - H_ground(l, l) - Delta(f))
     int n_excited_states = states.n_excited_states;
     int n_ground_states = states.n_ground_states;
-    ComplexMat W(n_excited_states * params.n_x_max * params.n_z_max,
-                  n_ground_states * params.n_x_max * params.n_z_max);
+    ComplexMat W = ComplexMat::Zero(n_excited_states * params.n_x_max * params.n_z_max,
+                                    n_ground_states * params.n_x_max * params.n_z_max);
     ComplexVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
     ComplexVec H_excited_diag = define_partition_hamiltonian(states.H_excited, params.n_x_max, params.n_z_max, params);
     for (int f = 0; f < params.n_beams; ++f) {
@@ -255,8 +255,8 @@ ComplexMat build_H(const States& states,
 {
     ComplexVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
     // H_eff = H_ground_diag - 0.5 * [V_minus * W + h.c.]
-    ComplexMat H_eff(states.n_ground_states * params.n_x_max * params.n_z_max,
-                     states.n_ground_states * params.n_x_max * params.n_z_max);
+    ComplexMat H_eff = ComplexMat::Zero(states.n_ground_states * params.n_x_max * params.n_z_max,
+                                        states.n_ground_states * params.n_x_max * params.n_z_max);
     ComplexMat V_minus_total = V_minus(states, params, I_index, D_index);
     // first add H_ground_diag
     for (int i = 0; i < states.n_ground_states * params.n_x_max * params.n_z_max; ++i) {

@@ -3,10 +3,12 @@
 #include <future>
 #include <unsupported/Eigen/MatrixFunctions>
 
+#include <iostream>
+
 namespace ss_spin {
 
 MatrixXc propagator(const MatrixXc& H, double dt) {
-    MatrixXc exp_H = (H * dt).exp();
+    MatrixXc exp_H = (- Complex(0,1) * H * dt).exp();
     return exp_H;
 }
 
@@ -102,6 +104,13 @@ solve(const double time_step,
     std::atomic<size_t> next_expected_idx{0}; // controls sequential emplacement
 
     const size_t total = num_steps; // Total number of elements to produce/consume
+    
+    MatrixXc sum_LdaggerL = MatrixXc::Zero(W.rows(), W.rows());
+    for (const auto& Li : Lt) {
+        sum_LdaggerL(std::get<1>(Li), std::get<1>(Li)) += std::conj(std::get<2>(Li)) * std::get<2>(Li);
+    }
+
+    MatrixXc H_eff = H - Complex(0, 0.5) * W.adjoint() * sum_LdaggerL * W;
 
     // Consumer threads
     auto make_consumer = [&](StateCarry init_state, std::promise<StateCarry> result_promise) {
@@ -114,6 +123,9 @@ solve(const double time_step,
             result.set_value(state);
         };
     };
+
+    auto U = propagator(H_eff, time_step);
+    std::cout << "U" << U << std::endl;
 
     // Launch consumers
     std::vector<std::thread> consumers;
@@ -134,7 +146,7 @@ solve(const double time_step,
             nz,
             Lt,
             G_tot,
-            propagator(H, time_step), // U
+            U,
             W,
             n_x, n_z,
             time_step,
@@ -183,6 +195,8 @@ solve(const double time_step,
     // Average number of jumps
     double avg_jumps = std::accumulate(all_jumps.begin(), all_jumps.end(), 0.0) /
                        static_cast<double>(all_jumps.size());
+
+    std::cout << "stability:" << U.pow(100) * all_final_psis.back() << std::endl;
 
     // Return final psi of last run (just like in Python)
     return {all_final_psis.back(), avg_jumps, avg_nx, avg_nz};

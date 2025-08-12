@@ -16,10 +16,11 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
 {
     const auto& Ds = params.D;
     const auto& Is = params.I;
+    auto states = diagonalize_hamiltonian(def_states);
     MatrixXd tot_jumps(Ds.rows(), Is.rows());
     MatrixXd avg_tempsx(Ds.rows(), Is.rows());
     MatrixXd avg_tempsz(Ds.rows(), Is.rows());
-    int n_expanded_ground_states = def_states.n_ground_states * params.n_x_max * params.n_z_max;
+    int n_expanded_ground_states = states.n_ground_states * params.n_x_max * params.n_z_max;
     double dt = t_0 / (N - 1);
     cout << "dt: " << dt << endl;
     for (size_t D_index = 0; D_index < Ds.rows(); ++D_index) {
@@ -31,22 +32,25 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             
             unsigned int seed = 42;
             int num_G_nonzero_entries = 0;
-            for (const auto& g : def_states.G) num_G_nonzero_entries += (g.array() != 0.0).count();
+            for (const auto& g : states.G) num_G_nonzero_entries += (g.array() != 0.0).count();
 
-            auto L = build_L(def_states.G, params.n_x_max, params.n_z_max,
+            auto L = build_L(states.G, params.n_x_max, params.n_z_max,
                              num_G_nonzero_entries, params.mass,
                              params.omega_x, params.omega_z,
-                             def_states.transition_lambda, def_states.B_direction, seed);
+                             states.transition_lambda, states.B_direction, seed);
             
-            auto W = build_W(def_states, params, I_index, D_index);
-            auto H = build_H(def_states, params, I_index, D_index, W);
+            auto W = build_W(states, params, I_index, D_index);
+            auto H = build_H(states, params, I_index, D_index, W);
+
+            cout << "W" << W << endl;
+            cout << "H" << H << endl;
 
             VectorXcd psi0 = VectorXc::Zero(n_expanded_ground_states);
             int idx0 = params.n_x_init * params.n_z_max + params.n_z_init; // initial state index
             psi0[idx0] = 1.0;
 
             auto [psi_final, jumps, nx_over_t, nz_over_t] =
-                ss_spin::solve(dt, N, N / 10, psi0, H, W, L, def_states.G_tot, params.n_x_max, params.n_z_max, num_keys);
+                ss_spin::solve(dt, N, N / 10, psi0, H, W, L, states.G_tot, params.n_x_max, params.n_z_max, num_keys);
 
             cout << "3. Function returned!" << endl;
 
