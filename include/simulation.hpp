@@ -13,7 +13,7 @@ using namespace define_params;
 using namespace std;
 
 // Actual simulation function wrapper
-std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys);
+std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys, double low_pass_threshold);
 
 } // namespace simulation
 

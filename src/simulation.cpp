@@ -12,7 +12,7 @@ using namespace hamiltonian;
 using namespace define_params;
 using namespace std;
 
-std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys)
+std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys, double low_pass_threshold)
 {
     const auto& Ds = params.D;
     const auto& Is = params.I;
@@ -41,9 +41,7 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             
             auto W = build_W(states, params, I_index, D_index);
             auto H = build_H(states, params, I_index, D_index, W);
-
-            cout << "W" << W << endl;
-            cout << "H" << H << endl;
+            H = low_pass_filter(H, low_pass_threshold);
 
             VectorXcd psi0 = VectorXc::Zero(n_expanded_ground_states);
             int idx0 = params.n_x_init * params.n_z_max + params.n_z_init; // initial state index

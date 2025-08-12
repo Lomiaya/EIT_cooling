@@ -1,15 +1,69 @@
+// stochastic_schrodinger_spin_motion.cpp
 #include "stochastic_schrodinger_spin_motion.hpp"
-#include <thread>
-#include <future>
-#include <unsupported/Eigen/MatrixFunctions>
+#include "chance_of_jump.hpp"
+#include <unsupported/Eigen/MatrixFunctions> // for expm
+#include <cmath>
+#include <numeric>
+#include <omp.h>
 
+#include <thread>
+#include <vector>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <future>
+
+//
 #include <iostream>
 
 namespace ss_spin {
 
-MatrixXc propagator(const MatrixXc& H, double dt) {
-    MatrixXc exp_H = (- Complex(0,1) * H * dt).exp();
-    return exp_H;
+MatrixXc brute_force(const std::vector<std::pair<MatrixXc,double>>& Hi_omegas,
+                     double t0, double t1,
+                     int n_steps) {
+    double dt = (t1 - t0) / n_steps;
+    int d = Hi_omegas[0].first.rows();
+    MatrixXc U = MatrixXc::Identity(d,d);
+    for(int k=0; k<n_steps; ++k) {
+        double t = t0 + k*dt;
+        MatrixXc drive = MatrixXc::Zero(d,d);
+        for(auto& p: Hi_omegas) drive += p.first * std::exp(Complex(0,1)*p.second*t);
+        MatrixXc H_eff = drive;
+        U = (MatrixXc::Identity(d,d) - Complex(0,1)*H_eff*dt) * U;
+    }
+    return U;
+}
+
+MatrixXc magnus2_analytic(const SpectrumMatrix& Hi_omegas,
+                          double t0, double t1) {
+    auto K = [&](double w){
+        if(std::abs(w) < 1e-12) return Complex(0,1)*(t0-t1);
+        return (std::exp(Complex(0,1)*w*t0) - std::exp(Complex(0,1)*w*t1))/w;
+    };
+    MatrixXc Omega1 = -Complex(0,1)*(MatrixXc::Zero(Hi_omegas[0].first.rows(),Hi_omegas[0].first.cols()));
+    for(auto& p: Hi_omegas) Omega1 += p.first * K(p.second);
+    // Omega2
+    MatrixXc Omega2 = -Complex(0,1)*(MatrixXc::Zero(Hi_omegas[0].first.rows(),Hi_omegas[0].first.cols()));
+    // I integral
+    auto Iij = [&](double w_i,double w_j){
+        if(std::abs(w_i)<1e-12 && std::abs(w_j)<1e-12) return Complex(1,0)*0.5*(t1-t0)*(t1-t0);
+        if(std::abs(w_j)<1e-12) return std::exp(Complex(0,1)*w_i*t1)*(Complex(1,0)/(w_i*w_i)+(t1-t0)/(Complex(0,1)*w_i))
+                                        - std::exp(Complex(0,1)*w_i*t0)*(Complex(1,0)/(w_i*w_i));
+        if(std::abs(w_i)<1e-12) return (std::exp(Complex(0,1)*(w_i+w_j)*t1)-std::exp(Complex(0,1)*(w_i+w_j)*t0))/(-w_j*(w_i+w_j)) 
+                                        - std::exp(Complex(0,1)*w_j*t0)*(t1-t0)/(Complex(0,1)*w_j);
+        if(std::abs(w_i+w_j)<1e-12) return ((t1-t0))/(Complex(0,1)*w_j)
+                                            - std::exp(Complex(0,1)*w_j*t0)*(std::exp(Complex(0,1)*w_i*t1)-std::exp(Complex(0,1)*w_i*t0))/(-w_i*w_j);
+        return (std::exp(Complex(0,1)*(w_i+w_j)*t1)-std::exp(Complex(0,1)*(w_i+w_j)*t0))/(-w_j*(w_i+w_j))
+                - std::exp(Complex(0,1)*w_j*t0)*(std::exp(Complex(0,1)*w_i*t1)-std::exp(Complex(0,1)*w_i*t0))/(-w_i*w_j);
+    };
+    // drive-drive
+    for(auto& pi: Hi_omegas) for(auto& pj: Hi_omegas) {
+        double wi=pi.second, wj=pj.second;
+        Omega2 += -0.5*(pi.first*pj.first - pj.first*pi.first)*Iij(pi.second,pj.second);
+    }
+    MatrixXc Omega = Omega1 + Omega2;
+    return Omega.exp();
 }
 
 std::pair<double,double> compute_avg_x_z(const VectorXc& psi,
@@ -29,18 +83,114 @@ std::pair<double,double> compute_avg_x_z(const VectorXc& psi,
     return {avg_x, avg_z};
 }
 
-std::pair<StateCarry, void*> step(const StateCarry& carry)
+Eigen::VectorXi expand(int idx,
+                       const std::array<int,5>& size_list) {
+    int np = size_list[0];
+    int ne = size_list[1];
+    int ng = size_list[2];
+    int n_x = size_list[3];
+    int n_z = size_list[4];
+    int nzi = idx % n_z;
+    idx = idx / n_z;
+    int nxi = idx % n_x;
+    idx = idx / n_x;
+    int nzf = idx % n_z;
+    idx = idx / n_z;
+    int nyf = idx % n_z;
+    idx = idx / n_z;
+    int nxf = idx % n_x;
+    idx = idx / n_x;
+    int ng_ = idx % ng;
+    idx = idx / ng;
+    int ne_ = idx % ne;
+    idx = idx / ne;
+    int np_ = idx;
+    Eigen::VectorXi out(7);
+    out << np_, ne_, ng_, nxf, nyf, nzf, nxi, nzi;
+    return out;
+}
+
+std::vector<std::tuple<int, int, double>> build_L(
+    const std::vector<Eigen::MatrixXd>& G,
+    int n_s, int n_x, int n_z,
+    int num_nonzero,
+    double mass,
+    double omega_x,
+    double omega_z,
+    double wavelength,
+    const std::array<double, 3>& B_direction,
+    unsigned int seed) 
 {
-    auto [psi, scatter_count, ii, step_count, per_log_step, nx, nz,
-          Lt, G_tot, U, W, n_x, n_z, dt, rng] = carry;
+    const int np = static_cast<int>(G.size());
+    const int ne = static_cast<int>(G[0].rows());
+    const int ng = static_cast<int>(G[0].cols());
 
-    // Propagate the state
-    psi = U * psi;
+    int full_size = num_nonzero * (n_x * n_x * n_x) * (n_z * n_z);
+    int full_full_size = np * ne * ng * (n_x * n_x * n_x) * (n_z * n_z);
+
+    std::vector<std::tuple<int, int, double>> Lt;
+
+    auto from_tuple_to_number = [&](int s, int x, int z) {
+        return (s * n_x + x) * n_z + z;
+    };
+
+    auto bound = [&](int x) {
+        return std::clamp(x, 0, n_x - 1);
+    };
+
+    for (int i = 0; i < full_full_size; ++i) {
+        // Unpack i to np_, ne_, ng_, nxf, nyf, nzf, nxi, nzi
+        int rem = i;
+        int nzi = rem % n_z; rem /= n_z;
+        int nxi = rem % n_x; rem /= n_x;
+        int nzf = rem % n_z; rem /= n_z;
+        int nyf = rem % n_x; rem /= n_x;
+        int nxf = rem % n_x; rem /= n_x;
+        int ng_ = rem % ng;  rem /= ng;
+        int ne_ = rem % ne;  rem /= ne;
+        int np_ = rem % np;
+
+        if (G[np_](ne_, ng_) == 0.0) continue;
+
+        int excited_state = from_tuple_to_number(ne_ + ng, nxi, nzi);
+        int ground_state = from_tuple_to_number(ng_, bound(nxf + nyf - nxi), nzf);
+
+        std::array<int, 3> start = {nxi, nxi, nzi};
+        std::array<int, 3> end   = {nxf, nyf, nzf};
+
+        std::vector<double> chance = chance_of_jump::calculate_chance_of_jump(
+            seed + i, // ensure variability if needed
+            np_, mass, omega_x, omega_z, wavelength,
+            B_direction, start, end, 500
+        );
+
+        double weighted_sum = 0.0;
+        for (double val : chance) {
+            weighted_sum += std::abs(val);
+        }
+
+        double average = weighted_sum / static_cast<double>(chance.size());
+        if (average <= 1e-3) continue;
+        average *= G[np_](ne_, ng_);
+        double chance_of_jump = std::sqrt(average);
+
+        Lt.emplace_back(ground_state, excited_state, chance_of_jump);
+    }
+
+    return Lt;
+}
+
+// Kernel function that consumes Data
+std::pair<StateCarry, void*> step(const StateCarry& carry,
+                                  MatrixXc& expH,
+                                  MatrixXc& Wt) {
+    auto [psi, scatter_count, ii, step_count, per_log_step, nx, nz, Lt, G_tot, n_x, n_z, dt, rng] = carry;
+
+    // Non-stochastic evolution using Magnus expansion
+    psi = expH * psi;
     psi.normalize();
-    
-    // The excited state population
-    VectorXc excited = W * psi;
 
+    VectorXc excited = Wt * psi;
     double jump_prob = excited.squaredNorm() * G_tot * dt;
     std::vector<double> probs_jump = {jump_prob, 1 - jump_prob};
     std::discrete_distribution<> dist_jump(probs_jump.begin(), probs_jump.end());
@@ -63,7 +213,7 @@ std::pair<StateCarry, void*> step(const StateCarry& carry)
 
         auto [i, j, val] = Lt[idx];
         VectorXc psi_post = VectorXc::Zero(psi.size());
-        psi_post(i) = 1;
+        psi_post(i) = 1.0;
         psi = psi_post;
         scatter_count += 1;
     }
@@ -76,10 +226,9 @@ std::pair<StateCarry, void*> step(const StateCarry& carry)
         ii += 1;
     }
     step_count += 1;
-    
+
     StateCarry new_state = std::make_tuple(psi, scatter_count, ii, step_count, per_log_step, nx, nz,
-                                           Lt, G_tot, U, W, n_x, n_z, dt, std::move(rng));
-    // Return the updated state carry
+                                           Lt, G_tot, n_x, n_z, dt, std::move(rng));
     return {new_state, nullptr};
 }
 
@@ -88,8 +237,8 @@ solve(const double time_step,
       const long long num_steps,
       const long long per_log_step,
       const VectorXc& psi0,
-      const MatrixXc& H,
-      const MatrixXc& W,
+      const SpectrumMatrix& H,
+      const SpectrumMatrix& W,
       const std::vector<std::tuple<int, int, double>>& Lt,
       const double G_tot,
       int n_x, int n_z,
@@ -99,24 +248,90 @@ solve(const double time_step,
     const size_t M = 10;   // Number of producer threads
     const size_t stash_capacity = 100;   // Stash capacity
 
+    std::queue<std::tuple<MatrixXc, size_t, size_t>> stash;
+    std::mutex mtx;
+    std::condition_variable cv_produce;
+    std::condition_variable cv_consume;
+
     std::atomic<size_t> produce_count{0};
     std::atomic<size_t> consume_count{0};
     std::atomic<size_t> next_expected_idx{0}; // controls sequential emplacement
-
-    const size_t total = num_steps; // Total number of elements to produce/consume
     
-    MatrixXc sum_LdaggerL = MatrixXc::Zero(W.rows(), W.rows());
+    const size_t total = num_steps; // Total number of elements to produce/consume
+
+    // Build K matrix (diagonal)
+    MatrixXc sum_LdaggerL = MatrixXc::Zero(W[0].first.rows(), W[0].first.rows());
     for (const auto& Li : Lt) {
         sum_LdaggerL(std::get<1>(Li), std::get<1>(Li)) += std::conj(std::get<2>(Li)) * std::get<2>(Li);
     }
+    SpectrumMatrix H_eff = addition(H, multiply(-Complex(0, 0.5), multiply(adjoint(W), multiply(sum_LdaggerL, W))));
 
-    MatrixXc H_eff = H - Complex(0, 0.5) * W.adjoint() * sum_LdaggerL * W;
+    // Producer threads
+    auto producer = [&]() {
+        while (true) {
+            size_t idx = produce_count.fetch_add(1);
+            if (idx >= total) break;
+
+            // Wait until it's this producer's turn to emplace
+            {
+                // Produce data
+                double time0 = time_step * idx;
+                double time1 = time0 + time_step;
+                MatrixXc d = magnus2_analytic(H_eff, time0, time1);
+                std::unique_lock<std::mutex> lock(mtx);
+                cv_produce.wait(lock, [&]() { return idx == next_expected_idx && stash.size() < stash_capacity; });
+                stash.emplace(d, 0, idx);  // stash maintains insertion order
+                ++next_expected_idx;
+                lock.unlock();
+
+                if (idx % per_log_step == 0) {
+                    std::cout << "Produced element " << idx << " by producer "
+                            << std::this_thread::get_id() << std::endl;
+                }
+            }
+
+            // Notify all consumers and producers (one may be waiting to insert next)
+            cv_consume.notify_all();
+            cv_produce.notify_all();
+        }
+    };
 
     // Consumer threads
     auto make_consumer = [&](StateCarry init_state, std::promise<StateCarry> result_promise) {
         return [&, state = std::move(init_state), result = std::move(result_promise)]() mutable {
             for (size_t i = 0; i < total; ++i) {
-                state = step(state).first;
+                {
+                    std::unique_lock<std::mutex> lock(mtx);
+                    cv_consume.wait(lock, [&]() { return !stash.empty() && std::get<2>(stash.front()) == i; });
+
+                    auto& [d, count, idx] = stash.front();
+
+                    // std::cout << "Consumed element " << idx << ", " << i << " by consumer "
+                    //         << std::this_thread::get_id() << std::endl;
+
+                    lock.unlock();
+
+                    // Process the data
+                    MatrixXc w = evaluate(W, time_step * i);
+                    state = step(state, d, w).first; // actively process data since d might be freed after stash.pop().
+                }
+
+                {
+                    std::unique_lock<std::mutex> lock(mtx);
+                    cv_consume.wait(lock, [&]() { return !stash.empty() && std::get<2>(stash.front()) == i; });
+
+                    auto& [d, count, idx] = stash.front();
+                    ++count;
+
+                    if (count == N) {
+                        stash.pop();
+                        lock.unlock();
+                        cv_produce.notify_one();
+                        cv_consume.notify_all();
+                    } else {
+                        lock.unlock(); // Don't notify producer yet
+                    }
+                }
             }
 
             // Return the final state
@@ -124,8 +339,12 @@ solve(const double time_step,
         };
     };
 
-    auto U = propagator(H_eff, time_step);
-    std::cout << "U" << U << std::endl;
+
+    // Launch producers
+    std::vector<std::thread> producers;
+    for (size_t i = 0; i < M; ++i) {
+        producers.emplace_back(producer);
+    }
 
     // Launch consumers
     std::vector<std::thread> consumers;
@@ -146,8 +365,6 @@ solve(const double time_step,
             nz,
             Lt,
             G_tot,
-            U,
-            W,
             n_x, n_z,
             time_step,
             rng
@@ -157,7 +374,9 @@ solve(const double time_step,
         consumers.emplace_back(make_consumer(init_state, std::move(p)));
     }
 
+
     // Join all
+    for (auto &t : producers) t.join();
     for (auto &t : consumers) t.join();
 
     // Collect results
@@ -175,7 +394,7 @@ solve(const double time_step,
     std::vector<int> all_jumps;
     std::vector<VectorXc> all_final_psis;
     for (auto& final_state: final_states) {
-        auto& [psi, scatter_count, ii, step_count, per_log_step, nx, nz, Lt, G_tot, n_g, n_s, n_x, n_z, dt, rng] = final_state;
+        auto& [psi, scatter_count, ii, step_count, per_log_step, nx, nz, Lt, G_tot, n_x, n_z, dt, rng] = final_state;
         all_final_psis.push_back(psi);
         all_jumps.push_back(scatter_count);
         all_nx.push_back(nx);
@@ -196,10 +415,8 @@ solve(const double time_step,
     double avg_jumps = std::accumulate(all_jumps.begin(), all_jumps.end(), 0.0) /
                        static_cast<double>(all_jumps.size());
 
-    std::cout << "stability:" << U.pow(100) * all_final_psis.back() << std::endl;
-
     // Return final psi of last run (just like in Python)
     return {all_final_psis.back(), avg_jumps, avg_nx, avg_nz};
 }
 
-}
+} // namespace ss_spin

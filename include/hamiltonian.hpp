@@ -15,35 +15,52 @@ namespace hamiltonian {
 using namespace Eigen;
 using namespace std;
 using namespace define_params;
+using SpectrumMatrix = std::vector<std::pair<ComplexMat, double>>;
 
 tuple<int, int, int> from_number_to_tuple(int n, int n_x_max, int n_z_max);
 // Diagonalizes the Hamiltonian and scattering matrices in the States struct
 States diagonalize_hamiltonian(const States& states);
 // Defines the partition-state Hamiltonian vector
-ComplexVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params);
+DoubleVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params);
+SpectrumMatrix multiply(const SpectrumMatrix& A,
+                        const SpectrumMatrix& B);
+SpectrumMatrix multiply(const ComplexMat& A,
+                        const SpectrumMatrix& B);
+SpectrumMatrix multiply(const SpectrumMatrix& A,
+                        const ComplexMat& B);
+SpectrumMatrix multiply(double c, const SpectrumMatrix& A);
+SpectrumMatrix multiply(Complex c, const SpectrumMatrix& A);
+SpectrumMatrix adjoint(const SpectrumMatrix& A);
+SpectrumMatrix addition(const SpectrumMatrix& A,
+                        const SpectrumMatrix& B);
+ComplexMat evaluate(const SpectrumMatrix& A, double t);
+SpectrumMatrix low_pass_filter(const SpectrumMatrix& A, double threshold);
 // Defines V_+(f,l) matrix, of shape n'_excited_states x n'_ground_states
-ComplexMat define_V_plus(const States& states,
-                         const Params& params,
-                         int f,
-                         int l,
-                         int I_index,
-                         int D_index);
+SpectrumMatrix define_V_plus(const States& states,
+                             const Params& params,
+                             int f,
+                             int l,
+                             int I_index,
+                             int D_index,
+                             DoubleVec& H_ground_diag);
 // Defines V_-(f) matrix, of shape n'_ground_states x n'_excited_states
-ComplexMat define_V_minus(const States& states,
-                          const Params& params,
-                          int f,
-                          int I_index,
-                          int D_index);
-// Sums over the V_-(f,l) matrices, wrapper, of shape n'_ground_states x n'_excited_states
-ComplexMat V_minus(const States& states,
-                   const Params& params,
-                   int I_index,
-                   int D_index);
+SpectrumMatrix define_V_minus(const States& states,
+                              const Params& params,
+                              int f,
+                              int I_index,
+                              int D_index,
+                              DoubleVec& H_ground_diag);
+// Sums over the V_-(f) matrices, wrapper, of shape n'_ground_states x n'_excited_states
+SpectrumMatrix V_minus(const States& states,
+                       const Params& params,
+                       int I_index,
+                       int D_index,
+                       DoubleVec& H_ground_diag);
 // Build W matrix, of shape n'_excited_states x n'_ground_states
-ComplexMat build_W(const States& states,
-                   const Params& params,
-                   int I_index,
-                   int D_index);
+SpectrumMatrix build_W(const States& states,
+                       const Params& params,
+                       int I_index,
+                       int D_index);
 // Build L (each entry: ground state, excited state, value)
 // Do NOT build ground state L, it is not efficient.
 std::vector<std::tuple<int, int, double>> build_L(const std::vector<Eigen::MatrixXd>& G,
@@ -56,11 +73,11 @@ std::vector<std::tuple<int, int, double>> build_L(const std::vector<Eigen::Matri
                                                   const std::array<double, 3>& B_direction,
                                                   unsigned int seed);
 // Build the Hamiltonian matrix, of shape n'_ground_states x n'_ground_states
-ComplexMat build_H(const States& states,
-                   const Params& params,
-                   int I_index,
-                   int D_index,
-                   ComplexMat& W);
+SpectrumMatrix build_H(const States& states,
+                       const Params& params,
+                       int I_index,
+                       int D_index,
+                       SpectrumMatrix& W);
 
 } // namespace hamiltonian
 

@@ -37,25 +37,116 @@ States diagonalize_hamiltonian(const States& states) {
     return new_states;
 }
 
-ComplexVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params) {
+DoubleVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params) {
     int n_states = H.rows();
-    ComplexVec hamiltonian = ComplexVec::Zero(n_states * n_x_max * n_z_max);
+    DoubleVec hamiltonian = DoubleVec::Zero(n_states * n_x_max * n_z_max);
     for (int i = 0; i < n_states; ++i) {
         for (int j = 0; j < n_x_max; ++j) {
             for (int k = 0; k < n_z_max; ++k) {
-                hamiltonian(i * n_x_max * n_z_max + j * n_z_max + k) = H(i, i) + params.omega_x * j + params.omega_z * k;
+                hamiltonian(i * n_x_max * n_z_max + j * n_z_max + k) = H(i, i).real() + params.omega_x * j + params.omega_z * k;
             }
         }
     }
     return hamiltonian;
 }
+SpectrumMatrix multiply(const SpectrumMatrix& A,
+                        const SpectrumMatrix& B)
+{
+    SpectrumMatrix result;
+    for (const auto& [A_mat, A_freq] : A) {
+        for (const auto& [B_mat, B_freq] : B) {
+            result.emplace_back(A_mat * B_mat, A_freq + B_freq);
+        }
+    }
+    return result;
+}
+SpectrumMatrix multiply(const ComplexMat& A,
+                        const SpectrumMatrix& B)
+{
+    SpectrumMatrix result;
+    for (const auto& [B_mat, B_freq] : B) {
+        result.emplace_back(A * B_mat, B_freq);
+    }
+    return result;
+}
+SpectrumMatrix multiply(const SpectrumMatrix& A,
+                        const ComplexMat& B)
+{
+    SpectrumMatrix result;
+    for (const auto& [A_mat, A_freq] : A) {
+        result.emplace_back(A_mat * B, A_freq);
+    }
+    return result;
+}
+SpectrumMatrix multiply(double c, const SpectrumMatrix& A)
+{
+    SpectrumMatrix result;
+    for (const auto& [A_mat, A_freq] : A) {
+        result.emplace_back(c * A_mat, A_freq);
+    }
+    return result;
+}
+SpectrumMatrix multiply(Complex c, const SpectrumMatrix& A)
+{
+    SpectrumMatrix result;
+    for (const auto& [A_mat, A_freq] : A) {
+        result.emplace_back(c * A_mat, A_freq);
+    }
+    return result;
+}
+SpectrumMatrix adjoint(const SpectrumMatrix& A)
+{
+    SpectrumMatrix result;
+    for (const auto& [A_mat, A_freq] : A) {
+        result.emplace_back(A_mat.adjoint(), -A_freq); // Frequency is negated for adjoint operation
+    }
+    return result;
+}
+SpectrumMatrix addition(const SpectrumMatrix& A,
+                        const SpectrumMatrix& B)
+{
+    SpectrumMatrix result = A;
+    for (const auto& [B_mat, B_freq] : B) {
+        bool found = false;
+        for (auto& [res_mat, res_freq] : result) {
+            if (res_freq == B_freq) {
+                res_mat += B_mat;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            result.emplace_back(B_mat, B_freq);
+        }
+    }
+    return result;
+}
+ComplexMat evaluate(const SpectrumMatrix& A, double t)
+{
+    ComplexMat result = ComplexMat::Zero(A[0].first.rows(), A[0].first.cols());
+    for (const auto& [A_mat, A_freq] : A) {
+        result += A_mat * std::exp(Complex(0, A_freq * t));
+    }
+    return result;
+}
+SpectrumMatrix low_pass_filter(const SpectrumMatrix& A, double threshold)
+{
+    SpectrumMatrix result;
+    for (const auto& [A_mat, A_freq] : A) {
+        if (abs(A_freq) < threshold) {
+            result.emplace_back(A_mat, A_freq);
+        }
+    }
+    return result;
+}
 
-ComplexMat define_V_plus(const States& states,
-                         const Params& params,
-                         int f,
-                         int l,
-                         int I_index,
-                         int D_index)
+SpectrumMatrix define_V_plus(const States& states,
+                             const Params& params,
+                             int f,
+                             int l,
+                             int I_index,
+                             int D_index,
+                             DoubleVec& H_ground_diag)
 {
     double Isat = parameters::pi * parameters::plancks_constant * parameters::speed_of_light * states.G_tot /
                   (3.0 * pow(states.transition_lambda, 3));
@@ -87,14 +178,16 @@ ComplexMat define_V_plus(const States& states,
         }
         V_plus(i, l) = contrib / Complex(2, 0);
     }
-    return V_plus;
+    double freq = - H_ground_diag(l) - params.D(D_index, f); // blue detuning
+    return {{V_plus, freq}};
 }
 
-ComplexMat define_V_minus(const States& states,
-                          const Params& params,
-                          int f,
-                          int I_index,
-                          int D_index)
+SpectrumMatrix define_V_minus(const States& states,
+                              const Params& params,
+                              int f,
+                              int I_index,
+                              int D_index,
+                              DoubleVec& H_ground_diag)
 {
     double Isat = parameters::pi * parameters::plancks_constant * parameters::speed_of_light * states.G_tot /
                   (3.0 * pow(states.transition_lambda, 3));
@@ -102,10 +195,11 @@ ComplexMat define_V_minus(const States& states,
     int size_excited = states.n_excited_states * params.n_x_max * params.n_z_max;
     Vector3d wavevector = params.k.row(f) * 2.0 * parameters::pi / states.transition_lambda;
     double sat_param = sqrt(params.I(I_index, f) / (2.0 * Isat));
-    MatrixXcd V_minus(size_ground, size_excited);
+    SpectrumMatrix V_minus;
     
     for (int i = 0; i < size_ground; ++i) {
         auto [g, xi, zi] = from_number_to_tuple(i, params.n_x_max, params.n_z_max);
+        MatrixXcd V_minus_this(size_ground, size_excited);
         for (int j = 0; j < size_excited; ++j) {
             auto [e, xj, zj] = from_number_to_tuple(j, params.n_x_max, params.n_z_max);
             complex<double> contrib = 0.0;
@@ -124,54 +218,55 @@ ComplexMat define_V_minus(const States& states,
                 );
                 contrib += Gijk * sat_param * params.s.row(f)[pol_dir] * ov;
             }
-            V_minus(i, j) = contrib / Complex(2, 0);
+            V_minus_this(i, j) = contrib / Complex(2, 0);
         }
+        double freq = params.D(D_index, f) + H_ground_diag(i); // blue detuning
+        V_minus.push_back({V_minus_this, freq});
     }
     return V_minus;
 }
 
-ComplexMat V_minus(const States& states,
-                   const Params& params,
-                   int I_index,
-                   int D_index)
+SpectrumMatrix V_minus(const States& states,
+                       const Params& params,
+                       int I_index,
+                       int D_index,
+                       DoubleVec& H_ground_diag)
 {
     int n_excited_states = states.n_excited_states;
     int n_ground_states = states.n_ground_states;
-    ComplexMat V_minus_total = ComplexMat::Zero(n_ground_states * params.n_x_max * params.n_z_max,
-                                                n_excited_states * params.n_x_max * params.n_z_max);
+    SpectrumMatrix V_minus_total;
     
     for (int f = 0; f < params.n_beams; ++f) {
-        ComplexMat V_minus_f = define_V_minus(states, params, f, I_index, D_index);
-        V_minus_total += V_minus_f;
+        SpectrumMatrix V_minus_f = define_V_minus(states, params, f, I_index, D_index, H_ground_diag);
+        V_minus_total = addition(V_minus_total, V_minus_f);
     }
     
     return V_minus_total;
 }
 
-ComplexMat build_W(const States& states,
-                   const Params& params,
-                   int I_index,
-                   int D_index)
+SpectrumMatrix build_W(const States& states,
+                       const Params& params,
+                       int I_index,
+                       int D_index)
 {
     // W = \sum_{f=0}^{n_beams-1} \sum_{l=0}^{n_ground_states * params.n_x_max * params.n_z_max - 1}
     // H_NH(f, l)^{-1} * V_plus(f, l)
     // Where H_NH(f, l)^{-1}(e, e) = 1 / (H_excited(e, e) - (i/2) G_tot - H_ground(l, l) - Delta(f))
     int n_excited_states = states.n_excited_states;
     int n_ground_states = states.n_ground_states;
-    ComplexMat W = ComplexMat::Zero(n_excited_states * params.n_x_max * params.n_z_max,
-                                    n_ground_states * params.n_x_max * params.n_z_max);
-    ComplexVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
-    ComplexVec H_excited_diag = define_partition_hamiltonian(states.H_excited, params.n_x_max, params.n_z_max, params);
+    SpectrumMatrix W;
+    DoubleVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
+    DoubleVec H_excited_diag = define_partition_hamiltonian(states.H_excited, params.n_x_max, params.n_z_max, params);
     for (int f = 0; f < params.n_beams; ++f) {
         for (int l = 0; l < n_ground_states * params.n_x_max * params.n_z_max; ++l) {
-            ComplexMat V_plus_fl = define_V_plus(states, params, f, l, I_index, D_index);
+            SpectrumMatrix V_plus_fl = define_V_plus(states, params, f, l, I_index, D_index, H_ground_diag);
             ComplexMat H_NH(n_excited_states * params.n_x_max * params.n_z_max,
                             n_excited_states * params.n_x_max * params.n_z_max);
             for (int e = 0; e < n_excited_states * params.n_x_max * params.n_z_max; ++e) {
                     H_NH(e, e) = Complex(1,0) / (H_excited_diag(e) - Complex(0, 0.5 * states.G_tot) -
-                                            H_ground_diag(l) - params.D(D_index, f)); // blue detuning
+                                                 H_ground_diag(l) - params.D(D_index, f)); // blue detuning
             }
-            W += H_NH * V_plus_fl;
+            W = addition(W, multiply(H_NH, V_plus_fl));
         }
     }
     return W;
@@ -247,24 +342,20 @@ std::vector<std::tuple<int, int, double>> build_L(
     return Lt;
 }
 
-ComplexMat build_H(const States& states,
-                   const Params& params,
-                   int I_index,
-                   int D_index,
-                   ComplexMat& W)
+SpectrumMatrix build_H(const States& states,
+                       const Params& params,
+                       int I_index,
+                       int D_index,
+                       SpectrumMatrix& W)
 {
-    ComplexVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
-    // H_eff = H_ground_diag - 0.5 * [V_minus * W + h.c.]
-    ComplexMat H_eff = ComplexMat::Zero(states.n_ground_states * params.n_x_max * params.n_z_max,
-                                        states.n_ground_states * params.n_x_max * params.n_z_max);
-    ComplexMat V_minus_total = V_minus(states, params, I_index, D_index);
-    // first add H_ground_diag
-    for (int i = 0; i < states.n_ground_states * params.n_x_max * params.n_z_max; ++i) {
-        H_eff(i, i) = H_ground_diag(i);
-    }
-    ComplexMat V_minus_W = V_minus_total * W;
+    // H_eff = - 0.5 * [V_minus * W + h.c.]
+    ComplexMat H_eff_zero = ComplexMat::Zero(states.n_ground_states * params.n_x_max * params.n_z_max,
+                                             states.n_ground_states * params.n_x_max * params.n_z_max);
+    DoubleVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
+    SpectrumMatrix V_minus_total = V_minus(states, params, I_index, D_index, H_ground_diag);
+    SpectrumMatrix V_minus_W = multiply(V_minus_total, W);
     // now add -0.5 * (V_minus * W + h.c.)
-    H_eff -= 0.5 * (V_minus_W + V_minus_W.adjoint());
+    SpectrumMatrix H_eff = multiply(-0.5, (addition(V_minus_W, adjoint(V_minus_W))));
     return H_eff;
 }
 } // namespace hamiltonian
