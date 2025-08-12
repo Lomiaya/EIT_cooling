@@ -5,7 +5,7 @@
 #include "hunds_case_b.hpp"
 
 int main() {
-    define_params::States states = caf_states::define_states();
+    define_params::States states = caf_states::define_states(0.0);
     auto X_matrix = states.H_ground;
     auto energies = state_hamiltonian::get_eigenvalues(states.H_ground);
     std::cout << X_matrix << std::endl;
