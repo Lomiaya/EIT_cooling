@@ -12,9 +12,7 @@ namespace simulation {
 using namespace define_params;
 using namespace std;
 
-int from_tuple_to_number(int s, int x, int z, const Params& p);
-tuple<int, int, int> from_number_to_tuple(int n, const Params& p);
-
+// Actual simulation function wrapper
 std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys);
 
 } // namespace simulation

@@ -16,55 +16,51 @@ using namespace Eigen;
 using namespace std;
 using namespace define_params;
 
-MatrixXcd build_H_zero_freq(const MatrixXcd& H_ground,
-                            const MatrixXcd& H_excited,
-                            int n_ground_states,
-                            int n_excited_states,
-                            int n_x_max,
-                            int n_z_max,
-                            const Params& params);
-
 tuple<int, int, int> from_number_to_tuple(int n, int n_x_max, int n_z_max);
-
-MatrixXcd build_H_light_transition_excite(double Iii,
-                                          const Vector3cd& pol,
-                                          const Vector3d& vec,
-                                          const vector<MatrixXd>& G,
-                                          double Isat,
-                                          double mass,
-                                          double wavelength,
-                                          int n_ground_states,
-                                          int n_excited_states,
-                                          int n_x_max,
-                                          int n_z_max,
-                                          const Params& params);
-
-MatrixXcd build_H_light_transition_deexci(double Iii,
-                                          const Vector3cd& pol,
-                                          const Vector3d& vec,
-                                          const vector<MatrixXd>& G,
-                                          double Isat,
-                                          double mass,
-                                          double wavelength,
-                                          int n_ground_states,
-                                          int n_excited_states,
-                                          int n_x_max,
-                                          int n_z_max,
-                                          const Params& params);
-
-MatrixXcd build_H_light_transition(double Iii,
-                                   const Vector3cd& pol,
-                                   const Vector3d& vec,
-                                   const vector<MatrixXd>& G,
-                                   double Isat,
-                                   double mass,
-                                   double wavelength,
-                                   int n_ground_states,
-                                   int n_excited_states,
-                                   int n_x_max,
-                                   int n_z_max,
-                                   const Params& params,
-                                   bool excite);
+// Diagonalizes the Hamiltonian and scattering matrices in the States struct
+States diagonalize_hamiltonian(const States& states);
+// Defines the partition-state Hamiltonian vector
+ComplexVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params);
+// Defines V_+(f,l) matrix, of shape n'_excited_states x n'_ground_states
+ComplexMat define_V_plus(const States& states,
+                         const Params& params,
+                         int f,
+                         int l,
+                         int I_index,
+                         int D_index);
+// Defines V_-(f) matrix, of shape n'_ground_states x n'_excited_states
+ComplexMat define_V_minus(const States& states,
+                          const Params& params,
+                          int f,
+                          int I_index,
+                          int D_index);
+// Sums over the V_-(f,l) matrices, wrapper, of shape n'_ground_states x n'_excited_states
+ComplexMat V_minus(const States& states,
+                   const Params& params,
+                   int I_index,
+                   int D_index);
+// Build W matrix, of shape n'_excited_states x n'_ground_states
+ComplexMat build_W(const States& states,
+                   const Params& params,
+                   int I_index,
+                   int D_index);
+// Build L (each entry: ground state, excited state, value)
+// Do NOT build ground state L, it is not efficient.
+std::vector<std::tuple<int, int, double>> build_L(const std::vector<Eigen::MatrixXd>& G,
+                                                  int n_x, int n_z,
+                                                  int num_nonzero,
+                                                  double mass,
+                                                  double omega_x,
+                                                  double omega_z,
+                                                  double wavelength,
+                                                  const std::array<double, 3>& B_direction,
+                                                  unsigned int seed);
+// Build the Hamiltonian matrix, of shape n'_ground_states x n'_ground_states
+ComplexMat build_H(const States& states,
+                   const Params& params,
+                   int I_index,
+                   int D_index,
+                   ComplexMat& W);
 
 } // namespace hamiltonian
 
