@@ -242,7 +242,8 @@ solve(const double time_step,
       const std::vector<std::tuple<int, int, double>>& Lt,
       const double G_tot,
       int n_x, int n_z,
-      int num_keys)
+      int num_keys,
+      double low_pass_threshold)
 {
     const size_t N = num_keys;   // Number of consumer threads & loops per thread
     const size_t M = 10;   // Number of producer threads
@@ -264,7 +265,7 @@ solve(const double time_step,
     for (const auto& Li : Lt) {
         sum_LdaggerL(std::get<1>(Li), std::get<1>(Li)) += std::conj(std::get<2>(Li)) * std::get<2>(Li);
     }
-    SpectrumMatrix H_eff = addition(H, multiply(-Complex(0, 0.5), multiply(adjoint(W), multiply(sum_LdaggerL, W))));
+    SpectrumMatrix H_eff = addition(H, multiply(-Complex(0, 0.5), multiply(adjoint(W), multiply(sum_LdaggerL, W), low_pass_threshold)));
 
     // Producer threads
     auto producer = [&]() {
@@ -277,7 +278,8 @@ solve(const double time_step,
                 // Produce data
                 double time0 = time_step * idx;
                 double time1 = time0 + time_step;
-                MatrixXc d = magnus2_analytic(H_eff, time0, time1);
+                // MatrixXc d = magnus2_analytic(H_eff, time0, time1);
+                MatrixXc d = brute_force(H_eff, time0, time1, 1);
                 std::unique_lock<std::mutex> lock(mtx);
                 cv_produce.wait(lock, [&]() { return idx == next_expected_idx && stash.size() < stash_capacity; });
                 stash.emplace(d, 0, idx);  // stash maintains insertion order

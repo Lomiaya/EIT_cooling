@@ -38,17 +38,35 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
                              num_G_nonzero_entries, params.mass,
                              params.omega_x, params.omega_z,
                              states.transition_lambda, states.B_direction, seed);
-            
+            std::cout << "Finished building L!" << std::endl;
             auto W = build_W(states, params, I_index, D_index);
+            std::cout << "Finished building W!" << std::endl;
             auto H = build_H(states, params, I_index, D_index, W);
+            std::cout << "Finished building H!" << std::endl;
             H = low_pass_filter(H, low_pass_threshold);
+            W = cleanup(W);
+            std::cout << "Size of W: " << W.size() << std::endl;
+            H = cleanup(H);
+            std::cout << "Size of H: " << H.size() << std::endl;
+
+            // for (const auto& [g, e, v] : L) {
+            //     cout << "L: " << g << ", " << e << ", " << v << endl;
+            // }
+
+            // for (const auto& [H_mat, H_freq] : H) {
+            //     cout << "H: " << H_freq << ", " << H_mat << endl;
+            // }
+
+            // for (const auto& [W_mat, W_freq] : W) {
+            //     cout << "W: " << W_freq << ", " << W_mat << endl;
+            // }
 
             VectorXcd psi0 = VectorXc::Zero(n_expanded_ground_states);
             int idx0 = params.n_x_init * params.n_z_max + params.n_z_init; // initial state index
             psi0[idx0] = 1.0;
 
             auto [psi_final, jumps, nx_over_t, nz_over_t] =
-                ss_spin::solve(dt, N, N / 10, psi0, H, W, L, states.G_tot, params.n_x_max, params.n_z_max, num_keys);
+                ss_spin::solve(dt, N, N / 10, psi0, H, W, L, states.G_tot, params.n_x_max, params.n_z_max, num_keys, low_pass_threshold);
 
             cout << "3. Function returned!" << endl;
 

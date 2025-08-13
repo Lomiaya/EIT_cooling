@@ -70,7 +70,7 @@ Params create_params(const States& states) {
         D1s(i) = val;
     }
 
-    double D2 = - 2.0 * parameters::pi * 94.5e6 - states.H_ground(1,1).real(); // this is blue detuning!
+    double D2 = - 2.0 * parameters::pi * 94.5e6 - states.H_ground(1,1).real(); // this is red detuning now!
     DoubleMat D(size_D,params.n_beams);
     int i = 0;
     for (const auto& D1 : D1s) {

@@ -177,7 +177,7 @@ Params create_params(const States& states) {
     params.n_x_max = 5;
     params.n_z_max = 1;
 
-    params.n_x_init = 3;
+    params.n_x_init = 2;
     params.n_z_init = 0;
 
     params.mass = 59 * parameters::atomic_unit_weight;

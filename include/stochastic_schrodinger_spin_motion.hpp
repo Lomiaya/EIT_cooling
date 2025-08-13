@@ -49,7 +49,8 @@ solve(const double time_step,
       const std::vector<std::tuple<int, int, double>>& Lt,
       const double G_tot,
       int n_x, int n_z,
-      int num_keys);
+      int num_keys,
+      double low_pass_threshold);
 } // namespace ss_spin
 
 #endif // STOCHASTIC_SCHRODINGER_SPIN_MOTION_HPP

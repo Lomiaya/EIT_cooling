@@ -2,6 +2,8 @@
 #include "constants.hpp"
 #include "chance_of_jump.hpp"
 
+#include <iostream>
+
 namespace hamiltonian {
 tuple<int, int, int> from_number_to_tuple(int n, int n_x_max, int n_z_max) {
     int z = n % n_z_max;
@@ -56,6 +58,20 @@ SpectrumMatrix multiply(const SpectrumMatrix& A,
     for (const auto& [A_mat, A_freq] : A) {
         for (const auto& [B_mat, B_freq] : B) {
             result.emplace_back(A_mat * B_mat, A_freq + B_freq);
+        }
+    }
+    return result;
+}
+SpectrumMatrix multiply(const SpectrumMatrix& A,
+                        const SpectrumMatrix& B,
+                        double threshold)
+{
+    SpectrumMatrix result;
+    for (const auto& [A_mat, A_freq] : A) {
+        for (const auto& [B_mat, B_freq] : B) {
+            if (std::abs(A_freq + B_freq) < threshold) {
+                result.emplace_back(A_mat * B_mat, A_freq + B_freq);
+            }
         }
     }
     return result;
@@ -139,6 +155,15 @@ SpectrumMatrix low_pass_filter(const SpectrumMatrix& A, double threshold)
     }
     return result;
 }
+SpectrumMatrix cleanup(const SpectrumMatrix& A)
+{
+    auto result = addition({}, A);
+    // Remove near-zero matrices
+    result.erase(std::remove_if(result.begin(), result.end(),
+                                [](const auto& pair) { return pair.first.norm() < 1e-12; }),
+                 result.end());
+    return result;
+}
 
 SpectrumMatrix define_V_plus(const States& states,
                              const Params& params,
@@ -154,7 +179,7 @@ SpectrumMatrix define_V_plus(const States& states,
     int size_excited = states.n_excited_states * params.n_x_max * params.n_z_max;
     Vector3d wavevector = params.k.row(f) * 2.0 * parameters::pi / states.transition_lambda;
     double sat_param = sqrt(params.I(I_index, f) / (2.0 * Isat));
-    MatrixXcd V_plus(size_excited, size_ground);
+    MatrixXcd V_plus = MatrixXcd::Zero(size_excited, size_ground);
 
     for (int i = 0; i < size_excited; ++i) {
         auto [e, xi, zi] = from_number_to_tuple(i, params.n_x_max, params.n_z_max);
@@ -199,7 +224,7 @@ SpectrumMatrix define_V_minus(const States& states,
     
     for (int i = 0; i < size_ground; ++i) {
         auto [g, xi, zi] = from_number_to_tuple(i, params.n_x_max, params.n_z_max);
-        MatrixXcd V_minus_this(size_ground, size_excited);
+        MatrixXcd V_minus_this = MatrixXcd::Zero(size_ground, size_excited);
         for (int j = 0; j < size_excited; ++j) {
             auto [e, xj, zj] = from_number_to_tuple(j, params.n_x_max, params.n_z_max);
             complex<double> contrib = 0.0;
@@ -260,8 +285,8 @@ SpectrumMatrix build_W(const States& states,
     for (int f = 0; f < params.n_beams; ++f) {
         for (int l = 0; l < n_ground_states * params.n_x_max * params.n_z_max; ++l) {
             SpectrumMatrix V_plus_fl = define_V_plus(states, params, f, l, I_index, D_index, H_ground_diag);
-            ComplexMat H_NH(n_excited_states * params.n_x_max * params.n_z_max,
-                            n_excited_states * params.n_x_max * params.n_z_max);
+            ComplexMat H_NH = ComplexMat::Zero(n_excited_states * params.n_x_max * params.n_z_max,
+                                               n_excited_states * params.n_x_max * params.n_z_max);
             for (int e = 0; e < n_excited_states * params.n_x_max * params.n_z_max; ++e) {
                     H_NH(e, e) = Complex(1,0) / (H_excited_diag(e) - Complex(0, 0.5 * states.G_tot) -
                                                  H_ground_diag(l) - params.D(D_index, f)); // blue detuning

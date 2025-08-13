@@ -24,6 +24,9 @@ States diagonalize_hamiltonian(const States& states);
 DoubleVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params);
 SpectrumMatrix multiply(const SpectrumMatrix& A,
                         const SpectrumMatrix& B);
+SpectrumMatrix multiply(const SpectrumMatrix& A,
+                        const SpectrumMatrix& B,
+                        double threshold);
 SpectrumMatrix multiply(const ComplexMat& A,
                         const SpectrumMatrix& B);
 SpectrumMatrix multiply(const SpectrumMatrix& A,
@@ -33,6 +36,7 @@ SpectrumMatrix multiply(Complex c, const SpectrumMatrix& A);
 SpectrumMatrix adjoint(const SpectrumMatrix& A);
 SpectrumMatrix addition(const SpectrumMatrix& A,
                         const SpectrumMatrix& B);
+SpectrumMatrix cleanup(const SpectrumMatrix& A);
 ComplexMat evaluate(const SpectrumMatrix& A, double t);
 SpectrumMatrix low_pass_filter(const SpectrumMatrix& A, double threshold);
 // Defines V_+(f,l) matrix, of shape n'_excited_states x n'_ground_states
