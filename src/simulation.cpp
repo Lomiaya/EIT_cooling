@@ -41,9 +41,9 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             std::cout << "Finished building L!" << std::endl;
             auto W = build_W(states, params, I_index, D_index);
             std::cout << "Finished building W!" << std::endl;
-            auto H = build_H(states, params, I_index, D_index, W);
+            auto H = build_H(states, params, I_index, D_index, W, low_pass_threshold);
             std::cout << "Finished building H!" << std::endl;
-            H = low_pass_filter(H, low_pass_threshold);
+            // H = low_pass_filter(H, low_pass_threshold);
             W = cleanup(W);
             std::cout << "Size of W: " << W.size() << std::endl;
             H = cleanup(H);

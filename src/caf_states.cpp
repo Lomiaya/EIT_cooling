@@ -153,13 +153,13 @@ Params create_params(const States& states) {
     for (int i = 0; i < size_D; ++i) {
         D(i,0) = D1;
         D(i,1) = D1;
-        D(i,4) = D3;
+        D(i,2) = D3;
     }
     params.D = D; // this is blue detuning!
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 500.0, 500.0, 200.0;
+    params.I << 400.0, 400.0, 30.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
@@ -174,10 +174,10 @@ Params create_params(const States& states) {
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
 
-    params.n_x_max = 5;
+    params.n_x_max = 10;
     params.n_z_max = 1;
 
-    params.n_x_init = 2;
+    params.n_x_init = 5;
     params.n_z_init = 0;
 
     params.mass = 59 * parameters::atomic_unit_weight;

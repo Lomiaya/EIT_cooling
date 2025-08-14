@@ -81,7 +81,8 @@ SpectrumMatrix build_H(const States& states,
                        const Params& params,
                        int I_index,
                        int D_index,
-                       SpectrumMatrix& W);
+                       SpectrumMatrix& W,
+                       double threshold);
 
 } // namespace hamiltonian
 
