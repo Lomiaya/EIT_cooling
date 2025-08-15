@@ -265,7 +265,8 @@ solve(const double time_step,
     for (const auto& Li : Lt) {
         sum_LdaggerL(std::get<1>(Li), std::get<1>(Li)) += std::conj(std::get<2>(Li)) * std::get<2>(Li);
     }
-    SpectrumMatrix H_eff = addition(H, multiply(-Complex(0, 0.5), multiply(adjoint(W), multiply(sum_LdaggerL, W), low_pass_threshold)));
+    // SpectrumMatrix H_eff = addition(H, multiply(-Complex(0, 0.5), multiply(adjoint(W), multiply(sum_LdaggerL, W), low_pass_threshold)));
+    SpectrumMatrix H_eff = H;
 
     // Producer threads
     auto producer = [&]() {

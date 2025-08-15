@@ -2,6 +2,7 @@
 #include "stochastic_schrodinger_spin_motion.hpp"
 #include "hamiltonian.hpp"
 #include "define_params.hpp"
+#include "constants.hpp"
 
 #include <iostream>
 
@@ -14,6 +15,10 @@ using namespace std;
 
 std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys, double low_pass_threshold)
 {
+    auto Isat = parameters::pi * parameters::plancks_constant * parameters::speed_of_light * def_states.G_tot /
+                  (3.0 * pow(def_states.transition_lambda, 3));
+    cout << "Isat: " << Isat << endl;
+
     const auto& Ds = params.D;
     const auto& Is = params.I;
     auto states = diagonalize_hamiltonian(def_states);

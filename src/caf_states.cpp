@@ -139,37 +139,42 @@ Params create_params(const States& states) {
     auto energies = get_eigenvalues(states.H_ground);
     auto gamma = states.G_tot;
 
-    params.n_beams = 3;
+    params.n_beams = 4;
 
-    int size_D = 1;
+    int size_D = 6;
 
     // Detunings
 
-    double D1 = gamma * 4.5 - energies[7]; // 4.5gamma detuning from F=2
+    double D1 = gamma * 4.5 - energies[8]; // 4.5gamma detuning from F=2
 
+    DoubleVec D2s(size_D);
+    for (int i = 0; i < size_D; ++i) {
+        double delta = (static_cast<double>(i) - 2.0) / 4.0 * 200e3;
+        double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[5]; // 4.5gamma detuning from F=1+
+        D2s(i) = val;
+    }
     double D3 = gamma * 4.5 - energies[3]; // 4.5gamma detuning from F=0
 
     DoubleMat D(size_D,params.n_beams);
     for (int i = 0; i < size_D; ++i) {
         D(i,0) = D1;
         D(i,1) = D1;
-        D(i,2) = D3;
+        D(i,2) = D2s[i];
+        D(i,3) = D3;
     }
     params.D = D; // this is blue detuning!
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 400.0, 400.0, 30.0;
+    params.I << 400.0, 400.0, 40.0, 50.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
-    params.s << 0.224 * Complex(0,1), 0.224, 0.949,  0.224 * Complex(0,1), 0.224, 0.949,
-                0.0, 1.0, 0.0;
+    params.s << 0.200, 0.0, 0.980,  Complex(0, 0.200), 0.0, Complex(0, 0.980),  0.0, 1.0, 0.0,  0.0, 1.0, 0.0;
 
-    // Wave vectors, do not include y direction, combine it with x direction.
+    // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << 0.916, 0.0, 0.400,  -0.916, 0.0, -0.400,
-                1.0, 0.0, 0.0; // actually 0.0, 1.0, 0.0
+    params.k << 1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  0.707, 0.0, 0.707,  1.0, 0.0, 0.0;
 
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
