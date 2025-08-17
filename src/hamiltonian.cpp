@@ -374,13 +374,10 @@ SpectrumMatrix build_H(const States& states,
                        SpectrumMatrix& W,
                        double threshold)
 {
-    // H_eff = - 0.5 * [V_minus * W + h.c.]
-    ComplexMat H_eff_zero = ComplexMat::Zero(states.n_ground_states * params.n_x_max * params.n_z_max,
-                                             states.n_ground_states * params.n_x_max * params.n_z_max);
+    // H_eff = - V_minus * W
     DoubleVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
     SpectrumMatrix V_minus_total = V_minus(states, params, I_index, D_index, H_ground_diag);
     SpectrumMatrix V_minus_W = multiply(V_minus_total, W, threshold);
-    // now add -0.5 * (V_minus * W + h.c.)
     // SpectrumMatrix H_eff = multiply(-0.5, (addition(V_minus_W, adjoint(V_minus_W))));
     SpectrumMatrix H_eff = multiply(-1, V_minus_W);
     return H_eff;

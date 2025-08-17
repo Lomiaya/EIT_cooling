@@ -22,6 +22,11 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
     const auto& Ds = params.D;
     const auto& Is = params.I;
     auto states = diagonalize_hamiltonian(def_states);
+    // std::cout << states.G[0] << std::endl;
+    // std::cout << states.G[1] << std::endl;
+    // std::cout << states.G[2] << std::endl;
+    // std::cout << states.H_ground << std::endl;
+    // std::cout << states.H_excited << std::endl;
     MatrixXd tot_jumps(Ds.rows(), Is.rows());
     MatrixXd avg_tempsx(Ds.rows(), Is.rows());
     MatrixXd avg_tempsz(Ds.rows(), Is.rows());

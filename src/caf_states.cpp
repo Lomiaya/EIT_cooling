@@ -116,7 +116,7 @@ States define_states(double B_field) {
 
     std::vector<Eigen::MatrixXd> G = { 2 * G_tot * G_pre[0], 2 * G_tot * G_pre[1], 2 * G_tot * G_pre[2] };
 
-    std::array<double, 3> B_direction = {1.0, 0.0, 0.0};
+    std::array<double, 3> B_direction = {0.0, 1.0, 0.0};
 
     double transition_lambda = 606e-9;
 
@@ -141,48 +141,50 @@ Params create_params(const States& states) {
 
     params.n_beams = 4;
 
-    int size_D = 6;
+    int size_D = 20;
 
     // Detunings
 
-    double D1 = gamma * 4.5 - energies[8]; // 4.5gamma detuning from F=2
+    double D1 = gamma * 3.0 - energies[4]; // 4.5gamma detuning from F=1+
 
     DoubleVec D2s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (static_cast<double>(i) - 2.0) / 4.0 * 200e3;
-        double val = 2.0 * parameters::pi * delta + gamma * 4.5 - energies[5]; // 4.5gamma detuning from F=1+
-        D2s(i) = val;
+        double delta = (static_cast<double>(i) - 10.0) / 10.0 * 100e3;
+        double val = 2.0 * parameters::pi * delta + gamma * 3.0 - energies[0]; // 4.5gamma detuning from F=1-
+        D2s[i] = val;
     }
-    double D3 = gamma * 4.5 - energies[3]; // 4.5gamma detuning from F=0
-
+    double big_detuning = 2.0 * parameters::pi * 900e3; // 900 kHz detuning
+    double D3 = - gamma * 3.0 + big_detuning - energies[7]; // F=2+ sigma+ repump
+    double D4 = - gamma * 3.0 - big_detuning - energies[11]; // F=2+ sigma- repump
     DoubleMat D(size_D,params.n_beams);
     for (int i = 0; i < size_D; ++i) {
         D(i,0) = D1;
-        D(i,1) = D1;
-        D(i,2) = D2s[i];
-        D(i,3) = D3;
+        D(i,1) = D2s[i];
+        D(i,2) = D3;
+        D(i,3) = D4;
     }
     params.D = D; // this is blue detuning!
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 400.0, 400.0, 40.0, 50.0;
+    // params.I << 400.0, 25.0, 100.0, 25.0;
+    params.I << 200.0, 10.0, 20.0, 20.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
-    params.s << 0.200, 0.0, 0.980,  Complex(0, 0.200), 0.0, Complex(0, 0.980),  0.0, 1.0, 0.0,  0.0, 1.0, 0.0;
+    params.s << 0.0, 1.0, 0.0,  0.0, 1.0, 0.0,  0.0, 0.0, 1.0,  1.0, 0.0, 0.0;
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << 1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  0.707, 0.0, 0.707,  1.0, 0.0, 0.0;
+    params.k << 1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  1.0, 0.0, 0.0;
 
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
 
-    params.n_x_max = 10;
+    params.n_x_max = 5;
     params.n_z_max = 1;
 
-    params.n_x_init = 5;
+    params.n_x_init = 2;
     params.n_z_init = 0;
 
     params.mass = 59 * parameters::atomic_unit_weight;
