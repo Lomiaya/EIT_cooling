@@ -139,38 +139,44 @@ Params create_params(const States& states) {
     auto energies = get_eigenvalues(states.H_ground);
     auto gamma = states.G_tot;
 
-    params.n_beams = 2;
+    params.n_beams = 4;
 
-    int size_D = 16;
+    int size_D = 20;
 
     // Detunings
 
-    double D1 = gamma * 2.0 - energies[9]; // 4gamma detuning from F=2
+    double D1 = gamma * 3.0 - energies[4]; // 4.5gamma detuning from F=1+
 
     DoubleVec D2s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (- static_cast<double>(i) + 2.0) / 5.0 * 100e3;
-        double val = 2.0 * parameters::pi * delta + gamma * 2.0 - energies[1]; // 4gamma detuning from F=1-
+        double delta = (static_cast<double>(i) - 10.0) / 10.0 * 100e3;
+        double val = 2.0 * parameters::pi * delta + gamma * 3.0 - energies[0]; // 4.5gamma detuning from F=1-
         D2s[i] = val;
     }
+    double big_detuning = 2.0 * parameters::pi * 900e3; // 900 kHz detuning
+    double D3 = - gamma * 3.0 + big_detuning - energies[7]; // F=2+ sigma+ repump
+    double D4 = - gamma * 3.0 - big_detuning - energies[11]; // F=2+ sigma- repump
     DoubleMat D(size_D,params.n_beams);
     for (int i = 0; i < size_D; ++i) {
         D(i,0) = D1;
         D(i,1) = D2s[i];
+        D(i,2) = D3;
+        D(i,3) = D4;
     }
     params.D = D; // this is blue detuning!
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 30.0, 600.0;
+    // params.I << 400.0, 25.0, 100.0, 25.0;
+    params.I << 200.0, 10.0, 20.0, 20.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
-    params.s << 0.577, 0.577, 0.577,  0.0, 1.0, 0.0;
+    params.s << 0.0, 1.0, 0.0,  0.0, 1.0, 0.0,  0.0, 0.0, 1.0,  1.0, 0.0, 0.0;
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << 1.0, 0.0, 0.0,  0.707, 0.0, 0.707;
+    params.k << 1.0, 0.0, 0.0,  -0.707, 0.0, 0.707,  -1.0, 0.0, 0.0,  1.0, 0.0, 0.0;
 
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
