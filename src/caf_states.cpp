@@ -167,7 +167,6 @@ Params create_params(const States& states) {
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    // params.I << 400.0, 25.0, 100.0, 25.0;
     params.I << 200.0, 10.0, 20.0, 20.0;
 
     // Polarizations
@@ -181,11 +180,11 @@ Params create_params(const States& states) {
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
 
-    params.n_x_max = 3;
-    params.n_z_max = 5;
+    params.n_x_max = 1;
+    params.n_z_max = 1;
 
-    params.n_x_init = 2;
-    params.n_z_init = 3;
+    params.n_x_init = 0;
+    params.n_z_init = 0;
 
     params.mass = 59 * parameters::atomic_unit_weight;
 

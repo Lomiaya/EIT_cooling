@@ -246,7 +246,7 @@ solve(const double time_step,
       double low_pass_threshold)
 {
     const size_t N = num_keys;   // Number of consumer threads & loops per thread
-    const size_t M = 10;   // Number of producer threads
+    const size_t M = 32;   // Number of producer threads
     const size_t stash_capacity = 100;   // Stash capacity
 
     std::queue<std::tuple<MatrixXc, size_t, size_t>> stash;

@@ -70,7 +70,17 @@ SpectrumMatrix multiply(const SpectrumMatrix& A,
     for (const auto& [A_mat, A_freq] : A) {
         for (const auto& [B_mat, B_freq] : B) {
             if (std::abs(A_freq + B_freq) < threshold) {
-                result.emplace_back(A_mat * B_mat, A_freq + B_freq);
+                bool found = false;
+                for (auto& [res_mat, res_freq] : result) {
+                    if (std::abs(B_freq + A_freq - res_freq) < 1) {
+                        res_mat += A_mat * B_mat;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    result.emplace_back(A_mat * B_mat, A_freq + B_freq);
+                }
             }
         }
     }
@@ -125,7 +135,7 @@ SpectrumMatrix addition(const SpectrumMatrix& A,
     for (const auto& [B_mat, B_freq] : B) {
         bool found = false;
         for (auto& [res_mat, res_freq] : result) {
-            if (res_freq == B_freq) {
+            if (std::abs(res_freq - B_freq) < 1) {
                 res_mat += B_mat;
                 found = true;
                 break;

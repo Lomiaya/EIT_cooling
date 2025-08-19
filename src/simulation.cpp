@@ -50,13 +50,12 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
                              states.transition_lambda, states.B_direction, seed);
             std::cout << "Finished building L!" << std::endl;
             auto W = build_W(states, params, I_index, D_index);
+            W = cleanup(W);
             std::cout << "Finished building W!" << std::endl;
             auto H = build_H(states, params, I_index, D_index, W, low_pass_threshold);
-            std::cout << "Finished building H!" << std::endl;
-            // H = low_pass_filter(H, low_pass_threshold);
-            W = cleanup(W);
-            std::cout << "Size of W: " << W.size() << std::endl;
             H = cleanup(H);
+            std::cout << "Finished building H!" << std::endl;
+            std::cout << "Size of W: " << W.size() << std::endl;
             std::cout << "Size of H: " << H.size() << std::endl;
 
             // for (const auto& [g, e, v] : L) {
