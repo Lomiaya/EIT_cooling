@@ -204,11 +204,11 @@ Params create_params(const States& states) {
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
 
-    params.n_x_max = 5;
-    params.n_z_max = 1;
+    params.n_x_max = 4;
+    params.n_z_max = 5;
 
     params.n_x_init = 2;
-    params.n_z_init = 0;
+    params.n_z_init = 3;
 
     params.mass = 59 * parameters::atomic_unit_weight;
 
