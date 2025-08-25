@@ -45,7 +45,7 @@ DoubleVec define_partition_hamiltonian(const ComplexMat& H, const ComplexMat& H_
     for (int i = 0; i < n_states; ++i) {
         for (int j = 0; j < n_x_max; ++j) {
             for (int k = 0; k < n_z_max; ++k) {
-                hamiltonian(i * n_x_max * n_z_max + j * n_z_max + k) = H(i, i).real() + (params.omega_x * j + params.omega_z * k - params.trap_depth) * H_stark(i, i).real();
+                hamiltonian(i * n_x_max * n_z_max + j * n_z_max + k) = H(i, i).real() + (params.omega_x * j + params.omega_z * k) * sqrt(H_stark(i, i).real()) + (- params.trap_depth) * H_stark(i, i).real();
             }
         }
     }
