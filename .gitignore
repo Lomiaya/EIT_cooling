@@ -2,3 +2,5 @@ build/
 CMakeFiles/
 .vscode/
 past_scans/
+*/.DS_Store
+.DS_Store
