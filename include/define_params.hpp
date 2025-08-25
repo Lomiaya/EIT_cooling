@@ -52,6 +52,19 @@ struct Params {
     double mass;    // kg
 };
 
+/**
+ * @brief Define quantum states
+ * @param n_ground_states Number of ground states
+ * @param n_excited_states Number of excited states
+ * @param B_direction Unit vectore representing the direction of the B field [x, y, z]
+ * @param G_tot Excited state scatering rate in rad/s
+ * @param G Dipole matrix in the shape: [3][n_excited_states][n_ground_states], in order of [sigma-, pi, sigma+]
+ * @param H_ground Ground state Hamiltonian, [n_ground_states][n_ground_states]
+ * @param H_excited Excited state Hamiltonian, [n_excites_states][n_excites_states]
+ * @param H_ground_stark Ground state Stark shift, n_ground_states x n_ground_states, relative, set to 1 for specified wx, wz, off-diagonal terms will be neglected
+ * @param H_excited_stark Excites state Stark shift, n_excited_states x n_excited_states, relative, set to 1 for specified wx, wz, off-diagonal terms will be neglected
+ * @param transition_lambda wavelength of the transition light, in m
+ */
 struct States {
     int n_ground_states;
     int n_excited_states;

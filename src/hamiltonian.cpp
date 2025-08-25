@@ -39,6 +39,9 @@ States diagonalize_hamiltonian(const States& states) {
     return new_states;
 }
 
+/**
+ * @brief Add Stark shift to Hamiltonian
+ */
 DoubleVec define_partition_hamiltonian(const ComplexMat& H, const ComplexMat& H_stark, int n_x_max, int n_z_max, const Params& params) {
     int n_states = H.rows();
     DoubleVec hamiltonian = DoubleVec::Zero(n_states * n_x_max * n_z_max);
@@ -279,6 +282,11 @@ SpectrumMatrix V_minus(const States& states,
     return V_minus_total;
 }
 
+/**
+ * @brief Build auxiliary term W = \sum_{f=0}^{n_beams-1} \sum_{l=0}^{n_ground_states * params.n_x_max * params.n_z_max - 1}
+ * H_NH(f, l)^{-1} * V_plus(f, l)
+ * Where H_NH(f, l)^{-1}(e, e) = 1 / (H_excited(e, e) - (i/2) G_tot - H_ground(l, l) - Delta(f))
+ */
 SpectrumMatrix build_W(const States& states,
                        const Params& params,
                        int I_index,
@@ -307,6 +315,11 @@ SpectrumMatrix build_W(const States& states,
     return W;
 }
 
+/**
+ * @brief Build relaxation operator
+ * 
+ * Returns (decay to which ground_state, from which excited_state, martrix element)
+ */
 std::vector<std::tuple<int, int, double>> build_L(
     const std::vector<Eigen::MatrixXd>& G,
     int n_x, int n_z,
@@ -377,6 +390,9 @@ std::vector<std::tuple<int, int, double>> build_L(
     return Lt;
 }
 
+/**
+ * @brief Build Hamiltonian.
+ */
 SpectrumMatrix build_H(const States& states,
                        const Params& params,
                        int I_index,

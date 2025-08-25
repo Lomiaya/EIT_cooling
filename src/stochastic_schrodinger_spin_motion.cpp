@@ -19,6 +19,9 @@
 
 namespace ss_spin {
 
+/**
+ * @brief Calculate evolution matrix
+ */
 MatrixXc brute_force(const std::vector<std::pair<MatrixXc,double>>& Hi_omegas,
                      double t0, double t1,
                      int n_steps) {
@@ -232,6 +235,21 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
     return {new_state, nullptr};
 }
 
+/**
+ * @brief A parallelized simulation of a quantum system's evolution over time, using producer-consumer threading to manage data processing. 
+ * It returns a tuple containing the final quantum state, the average number of quantum jumps, and averaged statistical data about the system's evolution.
+ * @param time_step Time step dt
+ * @param num_steps Number of the steps, N=t/dt
+ * @param per_long_step Log data every per_long_step steps
+ * @param psi0 Initial quantum state
+ * @param H Hamiltonian
+ * @param W Auxilary matirx
+ * @param Lt Relaxation operator
+ * @param G_tot Total scattering rate
+ * @param n_x, n_z Number of motional state
+ * @param num_keys Number of consumer threads & loops per thread
+ * @param low_pass_threshold Threshold to filter high-frequency components in Hamiltonian and W terms.
+ */
 std::tuple<VectorXc,double,VecD,VecD>
 solve(const double time_step,
       const long long num_steps,
