@@ -39,13 +39,13 @@ States diagonalize_hamiltonian(const States& states) {
     return new_states;
 }
 
-DoubleVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params) {
+DoubleVec define_partition_hamiltonian(const ComplexMat& H, const ComplexMat& H_stark, int n_x_max, int n_z_max, const Params& params) {
     int n_states = H.rows();
     DoubleVec hamiltonian = DoubleVec::Zero(n_states * n_x_max * n_z_max);
     for (int i = 0; i < n_states; ++i) {
         for (int j = 0; j < n_x_max; ++j) {
             for (int k = 0; k < n_z_max; ++k) {
-                hamiltonian(i * n_x_max * n_z_max + j * n_z_max + k) = H(i, i).real() + params.omega_x * j + params.omega_z * k;
+                hamiltonian(i * n_x_max * n_z_max + j * n_z_max + k) = H(i, i).real() + (params.omega_x * j + params.omega_z * k - params.trap_depth) * H_stark(i, i).real();
             }
         }
     }
@@ -290,8 +290,8 @@ SpectrumMatrix build_W(const States& states,
     int n_excited_states = states.n_excited_states;
     int n_ground_states = states.n_ground_states;
     SpectrumMatrix W;
-    DoubleVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
-    DoubleVec H_excited_diag = define_partition_hamiltonian(states.H_excited, params.n_x_max, params.n_z_max, params);
+    DoubleVec H_ground_diag = define_partition_hamiltonian(states.H_ground, states.H_ground_stark, params.n_x_max, params.n_z_max, params);
+    DoubleVec H_excited_diag = define_partition_hamiltonian(states.H_excited, states.H_excited_stark, params.n_x_max, params.n_z_max, params);
     for (int f = 0; f < params.n_beams; ++f) {
         for (int l = 0; l < n_ground_states * params.n_x_max * params.n_z_max; ++l) {
             SpectrumMatrix V_plus_fl = define_V_plus(states, params, f, l, I_index, D_index, H_ground_diag);
@@ -385,7 +385,7 @@ SpectrumMatrix build_H(const States& states,
                        double threshold)
 {
     // H_eff = - V_minus * W
-    DoubleVec H_ground_diag = define_partition_hamiltonian(states.H_ground, params.n_x_max, params.n_z_max, params);
+    DoubleVec H_ground_diag = define_partition_hamiltonian(states.H_ground, states.H_ground_stark, params.n_x_max, params.n_z_max, params);
     SpectrumMatrix V_minus_total = V_minus(states, params, I_index, D_index, H_ground_diag);
     SpectrumMatrix V_minus_W = multiply(V_minus_total, W, threshold);
     // SpectrumMatrix H_eff = multiply(-0.5, (addition(V_minus_W, adjoint(V_minus_W))));

@@ -5,6 +5,7 @@
 #include "constants.hpp"
 
 #include <iostream>
+#include <fstream>
 
 namespace simulation {
 
@@ -12,6 +13,20 @@ using namespace ss_spin;
 using namespace hamiltonian;
 using namespace define_params;
 using namespace std;
+
+void write_to_file(std::string file_name, std::string label, const VecD& data) {
+    // Open file for writing
+    std::ofstream file(file_name, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cerr << "Error: could not open file for writing. " << file_name;
+    }
+
+    // Optional: format without brackets, with space separation
+    Eigen::IOFormat format(Eigen::FullPrecision, Eigen::DontAlignCols, " ", "\n");
+
+    // Write matrix to file
+    file << label << " " << data.format(format) << std::endl;
+}
 
 std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys, double low_pass_threshold)
 {
@@ -87,6 +102,9 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             cout << "Resulting heat x: " << nx_over_t[nx_over_t.size() - 1] << endl;
             cout << "Resulting heat z: " << nz_over_t[nz_over_t.size() - 1] << endl;
             cout << "Resulting psi:" << psi_final << endl;
+
+            write_to_file("./heat_x.txt", "nx over t: ", nx_over_t);
+            write_to_file("./heat_z.txt", "nz over t: ", nz_over_t);
 
             auto t1 = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = t1 - t0;

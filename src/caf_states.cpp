@@ -120,19 +120,47 @@ States define_states(double B_field) {
 
     double transition_lambda = 606e-9;
 
+    VectorXc H_ground_stark_diag = VectorXc::Zero(n_ground_states);
+    VectorXc H_excited_stark_diag = VectorXc::Zero(n_excited_states);
+
+    // erm.
+    H_ground_stark_diag << 1.1002972018724442,
+                           0.8253996642223358,
+                           1.1002972109157563,
+                           1.0170112610473634,
+                           0.9935951927736283,
+                           1.0900132191625596,
+                           0.9935952018169403,
+                           1.1078715647941588,
+                           0.9293814858356476,
+                           0.8983952793117523,
+                           0.9293814858356476,
+                           1.107871554537773;
+    H_excited_stark_diag << 1.142, 1.157, 1.142, 1.264;
+
+    Matrix H_ground_stark = Matrix::Zero(n_ground_states, n_ground_states);
+    Matrix H_excited_stark = Matrix::Zero(n_excited_states, n_excited_states);
+    for (int i = 0; i < n_ground_states; ++i) {
+        H_ground_stark(i, i) = H_ground_stark_diag(i);
+    }
+    for (int i = 0; i < n_excited_states; ++i) {
+        H_excited_stark(i, i) = H_excited_stark_diag(i);
+    }
+
     States states;
     states.B_direction = B_direction;
     states.G = G;
     states.G_tot = G_tot;
     states.H_excited = H_excited;
+    states.H_excited_stark = H_excited_stark;
     states.H_ground = H_ground;
+    states.H_ground_stark = H_ground_stark;
     states.n_excited_states = n_excited_states;
     states.n_ground_states = n_ground_states;
     states.transition_lambda = transition_lambda;
     return states;
 }
 
-// haven't really done params!
 Params create_params(const States& states) {
     Params params;
 
@@ -140,17 +168,18 @@ Params create_params(const States& states) {
     auto gamma = states.G_tot;
 
     params.n_beams = 2;
+    params.trap_depth = 2 * parameters::pi * 4e7;
 
     int size_D = 16;
 
     // Detunings
 
-    double D1 = gamma * 2.0 - energies[9]; // 4gamma detuning from F=2
+    double D1 = gamma * 2.0 - energies[11] + params.trap_depth * (states.H_ground_stark(11,11).real() - states.H_ground_stark(0,0).real()); // 4gamma detuning from F=2
 
     DoubleVec D2s(size_D);
     for (int i = 0; i < size_D; ++i) {
         double delta = (- static_cast<double>(i) + 2.0) / 5.0 * 100e3;
-        double val = 2.0 * parameters::pi * delta + gamma * 2.0 - energies[1]; // 4gamma detuning from F=1-
+        double val = 2.0 * parameters::pi * delta + gamma * 2.0 - energies[0]; // 4gamma detuning from F=1-
         D2s[i] = val;
     }
     DoubleMat D(size_D,params.n_beams);
@@ -162,11 +191,11 @@ Params create_params(const States& states) {
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 30.0, 600.0;
+    params.I << 120.0, 600.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
-    params.s << 0.500, 0.707, 0.500,  0.0, 1.0, 0.0;
+    params.s << 0.250, 0.935, 0.250,  0.0, 1.0, 0.0;
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
@@ -175,11 +204,11 @@ Params create_params(const States& states) {
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
 
-    params.n_x_max = 3;
-    params.n_z_max = 5;
+    params.n_x_max = 5;
+    params.n_z_max = 1;
 
-    params.n_x_init = 1;
-    params.n_z_init = 3;
+    params.n_x_init = 2;
+    params.n_z_init = 0;
 
     params.mass = 59 * parameters::atomic_unit_weight;
 

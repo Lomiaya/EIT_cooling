@@ -49,6 +49,8 @@ States define_states() {
     states.G_tot = G_tot;
     states.H_excited = H_excited;
     states.H_ground = H_ground;
+    states.H_excited_stark = Matrix::Identity(n_excited_states, n_excited_states);
+    states.H_ground_stark = Matrix::Identity(n_ground_states, n_ground_states);
     states.n_excited_states = n_excited_states;
     states.n_ground_states = n_ground_states;
     states.transition_lambda = transition_lambda;
@@ -94,6 +96,7 @@ Params create_params(const States& states) {
 
     params.omega_x = 2 * parameters::pi * 73e3;
     params.omega_z = 2 * parameters::pi * 10e3;
+    params.trap_depth = 0.0; // no trap depth shift
 
     params.n_x_max = 5;
     params.n_z_max = 1;

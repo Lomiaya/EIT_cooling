@@ -21,7 +21,7 @@ tuple<int, int, int> from_number_to_tuple(int n, int n_x_max, int n_z_max);
 // Diagonalizes the Hamiltonian and scattering matrices in the States struct
 States diagonalize_hamiltonian(const States& states);
 // Defines the partition-state Hamiltonian vector
-DoubleVec define_partition_hamiltonian(const ComplexMat& H, int n_x_max, int n_z_max, const Params& params);
+DoubleVec define_partition_hamiltonian(const ComplexMat& H, const ComplexMat& H_stark, int n_x_max, int n_z_max, const Params& params);
 SpectrumMatrix multiply(const SpectrumMatrix& A,
                         const SpectrumMatrix& B);
 SpectrumMatrix multiply(const SpectrumMatrix& A,

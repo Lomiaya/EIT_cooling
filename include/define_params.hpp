@@ -25,6 +25,7 @@ struct Params {
 
     double omega_x;
     double omega_z;
+    double trap_depth; // in rad/s, used to calculate differential trap shift.
 
     int n_x_max;
     int n_z_max;
@@ -47,6 +48,8 @@ struct States {
 
     ComplexMat H_ground;  // n_ground_states x n_ground_states
     ComplexMat H_excited; // n_excited_states x n_excited_states
+    ComplexMat H_ground_stark; // n_ground_states x n_ground_states, relative, set to 1 for specified wx, wz, off-diagonal terms will be neglected
+    ComplexMat H_excited_stark; // n_excited_states x n_excited_states, relative, set to 1 for specified wx, wz, off-diagonal terms will be neglected
 
     double transition_lambda;
 };
