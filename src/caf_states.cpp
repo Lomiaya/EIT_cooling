@@ -199,7 +199,7 @@ Params create_params(const States& states) {
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << 0.707, 0.0, 0.707,  0.0, 0.0, 0.0;
+    params.k << 0.707, 0.0, 0.707,  1.0, 0.0, 0.0;
 
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_z = 2 * parameters::pi * 15e3;
