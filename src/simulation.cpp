@@ -28,8 +28,49 @@ void write_to_file(std::string file_name, std::string label, const VecD& data) {
     file << label << " " << data.format(format) << std::endl;
 }
 
+/**
+ * @brief Runs quantum simulation over grids of detunings and intensities, and computes heating and jump statistics.
+ *
+ * This function simulates the dynamics of a quantum system under a time-dependent Hamiltonian and associated 
+ * Lindblad operators, over a range of detunings (D) and intensities (I). It diagonalizes the initial state 
+ * Hamiltonian, constructs Liouvillian, Hamiltonian, and jump operators, and evolves the system using a solver.
+ * It outputs total jump counts and average final occupation numbers along two spatial axes.
+ *
+ * @param params         Struct containing simulation parameters
+ * @param def_states     Struct describing the default quantum states
+ * @param N              Number of time steps in the simulation.
+ * @param t_0            Total simulation time (final time).
+ * @param num_keys       Number of keys/frequencies used for Hamiltonian/W modulation.
+ * @param low_pass_threshold  Threshold to filter high-frequency components in Hamiltonian and W terms.
+ *
+ * @return std::tuple<MatrixXd, MatrixXd, MatrixXd> 
+ *         A tuple containing:
+ *         - tot_jumps:     Matrix of total quantum jumps per (D, I) pair.
+ *         - avg_tempsx:    Matrix of average final x-direction phonon occupation per (D, I) pair.
+ *         - avg_tempsz:    Matrix of average final z-direction phonon occupation per (D, I) pair.
+ *
+ * ### Details:
+ * - **Isat Calculation**: Uses physical constants and decay rates to compute saturation intensity.
+ * - **Diagonalization**: Diagonalizes the Hamiltonian to extract energy eigenstates and decay matrix G.
+ * - **Operator Construction**: Builds time-dependent Hamiltonian (H), jump operators (W), and Liouvillian (L).
+ * - **Initial State**: Initializes wavefunction in ground state with given spatial mode indices.
+ * - **Solver**: Evolves system using a solver (`ss_spin::solve`) and collects statistics on quantum jumps and phonon heating.
+ * - **Output Logging**: Intermediate results are logged to console and to files `heat_x.txt` and `heat_z.txt`.
+ * - **Performance**: Reports per-timestep runtime performance for each parameter set.
+ *
+ * ### Notes:
+ * - The matrices returned have dimensions `(Ds.rows(), Is.rows())`.
+ * - Assumes fixed initial random seed (42) for reproducibility.
+ * - Hamiltonian and W undergo "cleanup" filtering to reduce high-frequency contributions.
+ *
+ * ### Example Usage:
+ * ```cpp
+ * auto [jumps, heat_x, heat_z] = simulate(params, def_states, 500, 1e-3, 100, 0.01);
+ * ```
+ */
 std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys, double low_pass_threshold)
 {
+
     auto Isat = parameters::pi * parameters::plancks_constant * parameters::speed_of_light * def_states.G_tot /
                   (3.0 * pow(def_states.transition_lambda, 3));
     cout << "Isat: " << Isat << endl;
