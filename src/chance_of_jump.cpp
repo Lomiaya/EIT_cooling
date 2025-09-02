@@ -94,11 +94,22 @@ Complex calculate_overlap_from_k(
     const std::array<int, 3>& start,
     const std::array<int, 3>& end)
 {
+    return calculate_overlap_from_k(k_vec, mass, omega_x, omega_x, omega_z, start, end);
+}
+Complex calculate_overlap_from_k(
+    const Vec3& k_vec,
+    double mass,
+    double omega_x,
+    double omega_y,
+    double omega_z,
+    const std::array<int, 3>& start,
+    const std::array<int, 3>& end)
+{
     // reduced Planck constant, from your constants.hpp or just hardcode here
     constexpr double hbar = 1.054571817e-34;
 
     double x0 = std::sqrt(hbar / (mass * omega_x));
-    double y0 = x0;
+    double y0 = std::sqrt(hbar / (mass * omega_y));
     double z0 = std::sqrt(hbar / (mass * omega_z));
 
     int n_xi = start[0], n_yi = start[1], n_zi = start[2];
@@ -125,6 +136,21 @@ std::vector<double> calculate_chance_of_jump(
     const std::array<int,3>& start,
     const std::array<int,3>& end,
     int num_samples)
+{
+    return calculate_chance_of_jump(seed, np, mass, omega_x, omega_x, omega_z, wavelength, B_direction, start, end, num_samples);
+}
+std::vector<double> calculate_chance_of_jump(
+    int seed,
+    int np,
+    double mass,
+    double omega_x,
+    double omega_y,
+    double omega_z,
+    double wavelength,
+    const Vec3& B_direction,
+    const std::array<int, 3>& start,
+    const std::array<int, 3>& end,
+    int num_samples = 500)
 {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<double> uniform_0_1(0.0, 1.0);
@@ -161,7 +187,7 @@ std::vector<double> calculate_chance_of_jump(
             k_mag * k_hat[2]
         };
 
-        Complex overlap = calculate_overlap_from_k(k_vec, mass, omega_x, omega_z, start, end);
+        Complex overlap = calculate_overlap_from_k(k_vec, mass, omega_x, omega_y, omega_z, start, end);
 
         results.push_back((overlap * std::conj(overlap)).real());
     }

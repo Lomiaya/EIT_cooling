@@ -100,10 +100,20 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             int num_G_nonzero_entries = 0;
             for (const auto& g : states.G) num_G_nonzero_entries += (g.array() != 0.0).count();
 
-            auto L = build_L(states.G, params.n_x_max, params.n_z_max,
-                             num_G_nonzero_entries, params.mass,
-                             params.omega_x, params.omega_z,
-                             states.transition_lambda, states.B_direction, seed);
+            std::vector<std::tuple<int, int, double>> L;
+            if (params.do_2d_sim) {
+                cout << "2D simulation!" << endl;
+                auto L = build_L_2d(states.G, params.n_x_max, params.n_z_max,
+                                num_G_nonzero_entries, params.mass,
+                                params.omega_x, params.omega_z,
+                                states.transition_lambda, states.B_direction, seed);
+            } else {
+                cout << "3D simulation!" << endl;
+                auto L = build_L_3d(states.G, params.n_x_max, params.n_y_max, params.n_z_max,
+                                num_G_nonzero_entries, params.mass,
+                                params.omega_x, params.omega_y, params.omega_z,
+                                states.transition_lambda, states.B_direction, seed);
+            }
             std::cout << "Finished building L!" << std::endl;
             auto W = build_W(states, params, I_index, D_index);
             W = cleanup(W);

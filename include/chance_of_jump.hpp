@@ -28,6 +28,14 @@ Complex calculate_overlap_from_k(
     double omega_z,
     const std::array<int, 3>& start,
     const std::array<int, 3>& end);
+Complex calculate_overlap_from_k(
+    const Vec3& k_vec,
+    double mass,
+    double omega_x,
+    double omega_y,
+    double omega_z,
+    const std::array<int, 3>& start,
+    const std::array<int, 3>& end);
 
 // Sample matrix elements for random k-directions
 std::vector<double> calculate_chance_of_jump(
@@ -35,6 +43,18 @@ std::vector<double> calculate_chance_of_jump(
     int np,
     double mass,
     double omega_x,
+    double omega_z,
+    double wavelength,
+    const Vec3& B_direction,
+    const std::array<int, 3>& start,
+    const std::array<int, 3>& end,
+    int num_samples = 500);
+std::vector<double> calculate_chance_of_jump(
+    int seed,
+    int np,
+    double mass,
+    double omega_x,
+    double omega_y,
     double omega_z,
     double wavelength,
     const Vec3& B_direction,

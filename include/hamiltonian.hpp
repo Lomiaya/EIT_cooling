@@ -18,10 +18,12 @@ using namespace define_params;
 using SpectrumMatrix = std::vector<std::pair<ComplexMat, double>>;
 
 tuple<int, int, int> from_number_to_tuple(int n, int n_x_max, int n_z_max);
+tuple<int, int, int, int> from_number_to_tuple(int n, int n_x_max, int n_y_max, int n_z_max);
 // Diagonalizes the Hamiltonian and scattering matrices in the States struct
 States diagonalize_hamiltonian(const States& states);
 // Defines the partition-state Hamiltonian vector
 DoubleVec define_partition_hamiltonian(const ComplexMat& H, const ComplexMat& H_stark, int n_x_max, int n_z_max, const Params& params);
+DoubleVec define_partition_hamiltonian(const ComplexMat& H, const ComplexMat& H_stark, int n_x_max, int n_y_max, int n_z_max, const Params& params);
 SpectrumMatrix multiply(const SpectrumMatrix& A,
                         const SpectrumMatrix& B);
 SpectrumMatrix multiply(const SpectrumMatrix& A,
@@ -67,11 +69,21 @@ SpectrumMatrix build_W(const States& states,
                        int D_index);
 // Build L (each entry: ground state, excited state, value)
 // Do NOT build ground state L, it is not efficient.
-std::vector<std::tuple<int, int, double>> build_L(const std::vector<Eigen::MatrixXd>& G,
+std::vector<std::tuple<int, int, double>> build_L_2d(const std::vector<Eigen::MatrixXd>& G,
                                                   int n_x, int n_z,
                                                   int num_nonzero,
                                                   double mass,
                                                   double omega_x,
+                                                  double omega_z,
+                                                  double wavelength,
+                                                  const std::array<double, 3>& B_direction,
+                                                  unsigned int seed);
+std::vector<std::tuple<int, int, double>> build_L_3d(const std::vector<Eigen::MatrixXd>& G,
+                                                  int n_x, int n_y, int n_z,
+                                                  int num_nonzero,
+                                                  double mass,
+                                                  double omega_x,
+                                                  double omega_y,
                                                   double omega_z,
                                                   double wavelength,
                                                   const std::array<double, 3>& B_direction,

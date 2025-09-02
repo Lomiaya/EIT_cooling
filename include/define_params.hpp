@@ -23,12 +23,16 @@ using DoubleMat = Eigen::MatrixXd;
  * @param s Polarization, [n_beams][3], normalized [sigma-, pi, sigma+] for each beam
  * @param k K vector, [n_beams][3], normalized [x, y, z], can't have y component
  * @param omega_x Trap frequency in x direction, rad/s
+ * @param omega_y Trap frequency in y direction, rad/s
  * @param omega_z Trap frequency in z direction, rad/s
  * @param trap_depth Trap depth in rad/s, used to calculate differential trap shift.
  * @param n_x_max Max motional number in x direction considered in the siumuation.
+ * @param n_y_max Max motional number in y direction considered in the siumuation.
  * @param n_z_max Max motional number in z direction considered in the siumuation.
  * @param n_x_init Initial motion number in x direction.
+ * @param n_y_init Initial motion number in y direction.
  * @param n_z_init Initial motion number in z direction.
+ * @param do_2d_sim Whether to do 2D simulation, if true, only x and z direction is considered.
  * @param mass Mass in kg.
  *  **/
 struct Params {
@@ -40,14 +44,19 @@ struct Params {
     DoubleMat k;   // [n_beams][3], in the unit of lambda/2*pi, can't have y component
 
     double omega_x; // Trap frequency, rad/s
+    double omega_y = 0;
     double omega_z;
     double trap_depth; // in rad/s, used to calculate differential trap shift.
 
     int n_x_max; // Max motional number
+    int n_y_max = 1;
     int n_z_max;
 
     int n_x_init;
+    int n_y_init = 0;
     int n_z_init;
+
+    bool do_2d_sim = true;
 
     double mass;    // kg
 };
