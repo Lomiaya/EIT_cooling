@@ -641,7 +641,7 @@ SpectrumMatrix build_H(const States& states,
                        SpectrumMatrix& W,
                        double threshold)
 {
-    // H_eff = - V_minus * W
+    // H_eff = - V_minus * W. Memory-inefficient, but it works so I don't care.
     DoubleVec H_ground_diag;
     if (params.do_2d_sim)
         H_ground_diag = define_partition_hamiltonian(states.H_ground, states.H_ground_stark, params.n_x_max, params.n_z_max, params);
