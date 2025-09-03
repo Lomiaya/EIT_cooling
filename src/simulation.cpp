@@ -86,7 +86,6 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
     MatrixXd tot_jumps(Ds.rows(), Is.rows());
     MatrixXd avg_tempsx(Ds.rows(), Is.rows());
     MatrixXd avg_tempsz(Ds.rows(), Is.rows());
-    int n_expanded_ground_states = states.n_ground_states * params.n_x_max * params.n_z_max;
     double dt = t_0 / (N - 1);
     cout << "dt: " << dt << endl;
     for (size_t D_index = 0; D_index < Ds.rows(); ++D_index) {
@@ -101,18 +100,27 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             for (const auto& g : states.G) num_G_nonzero_entries += (g.array() != 0.0).count();
 
             std::vector<std::tuple<int, int, double>> L;
+            VectorXcd psi0;
             if (params.do_2d_sim) {
                 cout << "2D simulation!" << endl;
-                auto L = build_L_2d(states.G, params.n_x_max, params.n_z_max,
+                L = build_L_2d(states.G, params.n_x_max, params.n_z_max,
                                 num_G_nonzero_entries, params.mass,
                                 params.omega_x, params.omega_z,
                                 states.transition_lambda, states.B_direction, seed);
+                int n_expanded_ground_states = states.n_ground_states * params.n_x_max * params.n_z_max;
+                psi0 = VectorXc::Zero(n_expanded_ground_states);
+                int idx0 = params.n_x_init * params.n_z_max + params.n_z_init; // initial state index
+                psi0[idx0] = 1.0;
             } else {
                 cout << "3D simulation!" << endl;
-                auto L = build_L_3d(states.G, params.n_x_max, params.n_y_max, params.n_z_max,
+                L = build_L_3d(states.G, params.n_x_max, params.n_y_max, params.n_z_max,
                                 num_G_nonzero_entries, params.mass,
                                 params.omega_x, params.omega_y, params.omega_z,
                                 states.transition_lambda, states.B_direction, seed);
+                int n_expanded_ground_states = states.n_ground_states * params.n_x_max * params.n_y_max * params.n_z_max;
+                psi0 = VectorXc::Zero(n_expanded_ground_states);
+                int idx0 = ((params.n_x_init * params.n_y_max) + params.n_y_init) * params.n_z_max + params.n_z_init; // initial state index
+                psi0[idx0] = 1.0;
             }
             std::cout << "Finished building L!" << std::endl;
             auto W = build_W(states, params, I_index, D_index);
@@ -129,16 +137,16 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             // }
 
             // for (const auto& [H_mat, H_freq] : H) {
-            //     cout << "H: " << H_freq << ", " << H_mat << endl;
+            //     cout << "H: " << H_freq << ", " << H_mat.rows() << ", " << H_mat.cols() 
+            //     // << ", " << H_mat << endl
+            //     ;
             // }
 
             // for (const auto& [W_mat, W_freq] : W) {
-            //     cout << "W: " << W_freq << ", " << W_mat << endl;
+            //     cout << "W: " << W_freq << ", " << W_mat.rows() << ", " << W_mat.cols() 
+            //     // << ", " << W_mat << endl
+            //     ;
             // }
-
-            VectorXcd psi0 = VectorXc::Zero(n_expanded_ground_states);
-            int idx0 = params.n_x_init * params.n_z_max + params.n_z_init; // initial state index
-            psi0[idx0] = 1.0;
 
             auto [psi_final, jumps, nx_over_t, nz_over_t] =
                 ss_spin::solve(dt, N, N / 10, psi0, H, W, L, states.G_tot, params.n_x_max, params.n_z_max, num_keys, low_pass_threshold);

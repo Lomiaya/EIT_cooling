@@ -454,8 +454,8 @@ SpectrumMatrix build_W_3d(const States& states,
     for (int f = 0; f < params.n_beams; ++f) {
         for (int l = 0; l < n_ground_states * params.n_x_max * params.n_y_max * params.n_z_max; ++l) {
             SpectrumMatrix V_plus_fl = define_V_plus(states, params, f, l, I_index, D_index, H_ground_diag);
-            ComplexMat H_NH = ComplexMat::Zero(n_excited_states * params.n_x_max * params.n_z_max,
-                                               n_excited_states * params.n_x_max * params.n_z_max);
+            ComplexMat H_NH = ComplexMat::Zero(n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max,
+                                               n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max);
             for (int e = 0; e < n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max; ++e) {
                     H_NH(e, e) = Complex(1,0) / (H_excited_diag(e) - Complex(0, 0.5 * states.G_tot) -
                                                  H_ground_diag(l) - params.D(D_index, f)); // blue detuning
@@ -642,7 +642,11 @@ SpectrumMatrix build_H(const States& states,
                        double threshold)
 {
     // H_eff = - V_minus * W
-    DoubleVec H_ground_diag = define_partition_hamiltonian(states.H_ground, states.H_ground_stark, params.n_x_max, params.n_z_max, params);
+    DoubleVec H_ground_diag;
+    if (params.do_2d_sim)
+        H_ground_diag = define_partition_hamiltonian(states.H_ground, states.H_ground_stark, params.n_x_max, params.n_z_max, params);
+    else
+        H_ground_diag = define_partition_hamiltonian(states.H_ground, states.H_ground_stark, params.n_x_max, params.n_y_max, params.n_z_max, params);
     SpectrumMatrix V_minus_total = V_minus(states, params, I_index, D_index, H_ground_diag);
     SpectrumMatrix V_minus_W = multiply(V_minus_total, W, threshold);
     // SpectrumMatrix H_eff = multiply(-0.5, (addition(V_minus_W, adjoint(V_minus_W))));

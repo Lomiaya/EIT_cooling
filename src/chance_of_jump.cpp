@@ -150,7 +150,7 @@ std::vector<double> calculate_chance_of_jump(
     const Vec3& B_direction,
     const std::array<int, 3>& start,
     const std::array<int, 3>& end,
-    int num_samples = 500)
+    int num_samples)
 {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<double> uniform_0_1(0.0, 1.0);
