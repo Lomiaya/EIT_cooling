@@ -167,7 +167,7 @@ Params create_params(const States& states) {
     auto energies = get_eigenvalues(states.H_ground);
     auto gamma = states.G_tot;
 
-    params.n_beams = 2;
+    params.n_beams = 3;
     params.trap_depth = 2 * parameters::pi * 4e7;
 
     int size_D = 16;
@@ -185,21 +185,22 @@ Params create_params(const States& states) {
     DoubleMat D(size_D,params.n_beams);
     for (int i = 0; i < size_D; ++i) {
         D(i,0) = D1;
-        D(i,1) = D2s[i];
+        D(i,1) = D1;
+        D(i,2) = D2s[i];
     }
     params.D = D; // this is blue detuning!
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 60.0, 600.0;
+    params.I << 60.0, 60.0, 600.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
-    params.s << 0.500, 0.707, 0.500,  0.0, 1.0, 0.0;
+    params.s << 0.500, 0.707, 0.500,  0.707, 0.0, 0.707,  0.0, 1.0, 0.0;
 
     // Wave vectors
     params.k = DoubleMat(params.n_beams,3);
-    params.k << 0.707, 0.0, 0.707,  1.0, 0.0, 0.0;
+    params.k << 0.707, 0.0, 0.707,  0.0, 1.0, 0.0,  1.0, 0.0, 0.0;
 
     params.omega_x = 2 * parameters::pi * 100e3;
     params.omega_y = 2 * parameters::pi * 100e3;
@@ -207,11 +208,11 @@ Params create_params(const States& states) {
 
     params.n_x_max = 4;
     params.n_y_max = 4;
-    params.n_z_max = 8;
+    params.n_z_max = 1;
 
     params.n_x_init = 2;
     params.n_y_init = 2;
-    params.n_z_init = 5;
+    params.n_z_init = 0;
 
     params.do_2d_sim = false;
 
