@@ -29,17 +29,19 @@ MatrixXc magnus2_analytic(const SpectrumMatrix& Hi_omegas,
 std::pair<double,double> compute_avg_x_z(const VectorXc& psi,
                                          int n_x, int n_z);
 
-using StateCarry = std::tuple<VectorXc,int,long long,long long,long long,VecD,VecD, // psi, scatter_count, ii, step_count, per_log_step, nx, nz
+std::tuple<double,double,double> compute_avg_x_y_z(const VectorXc& psi, int n_x, int n_y, int n_z);
+
+using StateCarry = std::tuple<VectorXc,int,long long,long long,long long,VecD,VecD,VecD, // psi, scatter_count, ii, step_count, per_log_step, nx, ny, nz
                               std::vector<std::tuple<int, int, double>>, // Lt entries: i,j,val
                               double, // G_tot
-                              int, int, // sizes: n_x,n_z
+                              int, int, int, bool, // sizes: n_x,n_y,n_z; is_2d_sim
                               double, std::mt19937>; // dt, rng seed
 std::pair<StateCarry, void*> step(const StateCarry& carry,
                                   const MatrixXc& expH,
                                   const MatrixXc& Wt);
 
 // Full solve: returns (final psi, mean jumps, avg_x, avg_z)
-std::tuple<VectorXc,double,VecD,VecD>
+std::tuple<VectorXc,double,VecD,VecD,VecD>
 solve(const double time_step,
       const long long num_steps,
       const long long per_log_step,
@@ -48,7 +50,8 @@ solve(const double time_step,
       const SpectrumMatrix& W,
       const std::vector<std::tuple<int, int, double>>& Lt,
       const double G_tot,
-      int n_x, int n_z,
+      int n_x, int n_y, int n_z,
+      bool is_2d_sim,
       int num_keys,
       double low_pass_threshold);
 } // namespace ss_spin

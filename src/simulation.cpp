@@ -68,7 +68,7 @@ void write_to_file(std::string file_name, std::string label, const VecD& data) {
  * auto [jumps, heat_x, heat_z] = simulate(params, def_states, 500, 1e-3, 100, 0.01);
  * ```
  */
-std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys, double low_pass_threshold)
+std::tuple<MatrixXd, MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const States& def_states, const int N, const double t_0, const int num_keys, double low_pass_threshold)
 {
 
     auto Isat = parameters::pi * parameters::plancks_constant * parameters::speed_of_light * def_states.G_tot /
@@ -85,6 +85,7 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
     // std::cout << states.H_excited << std::endl;
     MatrixXd tot_jumps(Ds.rows(), Is.rows());
     MatrixXd avg_tempsx(Ds.rows(), Is.rows());
+    MatrixXd avg_tempsy(Ds.rows(), Is.rows());
     MatrixXd avg_tempsz(Ds.rows(), Is.rows());
     double dt = t_0 / (N - 1);
     cout << "dt: " << dt << endl;
@@ -148,21 +149,26 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
             //     ;
             // }
 
-            auto [psi_final, jumps, nx_over_t, nz_over_t] =
-                ss_spin::solve(dt, N, N / 10, psi0, H, W, L, states.G_tot, params.n_x_max, params.n_z_max, num_keys, low_pass_threshold);
+            auto [psi_final, jumps, nx_over_t, ny_over_t, nz_over_t] =
+                ss_spin::solve(dt, N, N / 10, psi0, H, W, L, states.G_tot, 
+                               params.n_x_max, params.n_y_max, params.n_z_max, 
+                               params.do_2d_sim, num_keys, low_pass_threshold);
 
             cout << "3. Function returned!" << endl;
 
             tot_jumps(D_index, I_index) = jumps;
             avg_tempsx(D_index, I_index) = nx_over_t[nx_over_t.size() - 1];
+            avg_tempsy(D_index, I_index) = ny_over_t[nx_over_t.size() - 1];
             avg_tempsz(D_index, I_index) = nz_over_t[nz_over_t.size() - 1];
 
             cout << "Total jumps: " << jumps << endl;
             cout << "Resulting heat x: " << nx_over_t[nx_over_t.size() - 1] << endl;
+            cout << "Resulting heat y: " << ny_over_t[ny_over_t.size() - 1] << endl;
             cout << "Resulting heat z: " << nz_over_t[nz_over_t.size() - 1] << endl;
             cout << "Resulting psi:" << psi_final << endl;
 
             write_to_file("./heat_x.txt", "nx over t: ", nx_over_t);
+            write_to_file("./heat_y.txt", "ny over t: ", ny_over_t);
             write_to_file("./heat_z.txt", "nz over t: ", nz_over_t);
 
             auto t1 = chrono::high_resolution_clock::now();
@@ -173,8 +179,9 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params, const St
 
     cout << tot_jumps << endl;
     cout << avg_tempsx << endl;
+    cout << avg_tempsy << endl;
     cout << avg_tempsz << endl;
-    return {tot_jumps, avg_tempsx, avg_tempsz};
+    return {tot_jumps, avg_tempsx, avg_tempsy, avg_tempsz};
 }
 
 }

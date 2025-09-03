@@ -553,6 +553,7 @@ std::vector<std::tuple<int, int, double>> build_L_2d(
         if (average <= 1e-3) continue;
         average *= G[np_](ne_, ng_);
         double weight_of_jump = std::sqrt(average);
+        if (weight_of_jump < 1) continue;
 
         Lt.emplace_back(ground_state, excited_state, weight_of_jump);
     }
@@ -584,10 +585,6 @@ std::vector<std::tuple<int, int, double>> build_L_3d(
         return ((s * n_x + x) * n_y + y) * n_z + z;
     };
 
-    auto bound = [&](int x) {
-        return std::clamp(x, 0, n_x - 1);
-    };
-
     for (int i = 0; i < full_full_size; ++i) {
         // Unpack i to np_, ne_, ng_, nxf, nyf, nzf, nxi, nyi, nzi
         int rem = i;
@@ -611,7 +608,7 @@ std::vector<std::tuple<int, int, double>> build_L_3d(
 
         std::vector<double> chance = chance_of_jump::calculate_chance_of_jump(
             seed + i, // ensure variability if needed
-            np_, mass, omega_x, omega_z, wavelength,
+            np_, mass, omega_x, omega_y, omega_z, wavelength,
             B_direction, start, end, 500
         );
 
@@ -624,6 +621,7 @@ std::vector<std::tuple<int, int, double>> build_L_3d(
         if (average <= 1e-3) continue;
         average *= G[np_](ne_, ng_);
         double weight_of_jump = std::sqrt(average);
+        if (weight_of_jump < 1) continue;
 
         Lt.emplace_back(ground_state, excited_state, weight_of_jump);
     }

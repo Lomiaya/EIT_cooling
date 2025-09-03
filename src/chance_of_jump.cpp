@@ -34,6 +34,12 @@ double assoc_laguerre(int n, int a, double x) {
 Complex ho_1d(int n_i, int n_f, double k_alpha, double x0_alpha) {
     int delta_n = n_f - n_i;
     double eta = k_alpha * x0_alpha / std::sqrt(2.0);
+
+    if (k_alpha <= 0.001) {
+        if (delta_n == 0) return Complex(1,0);
+        else return Complex(0,0);
+    }
+
     int n_min = std::min(n_i, n_f);
     int n_max = std::max(n_i, n_f);
 

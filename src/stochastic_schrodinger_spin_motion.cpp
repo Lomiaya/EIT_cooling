@@ -86,6 +86,24 @@ std::pair<double,double> compute_avg_x_z(const VectorXc& psi,
     return {avg_x, avg_z};
 }
 
+std::tuple<double,double,double> compute_avg_x_y_z(const VectorXc& psi, int n_x, int n_y, int n_z) {
+    int n_tot = psi.size();
+    VecD probs = psi.cwiseAbs2().real();
+    VecD idx = VecD::LinSpaced(n_tot, 0, n_tot - 1);
+
+    // compute 3D indices: s, x, z from linear index
+    VecD s = (idx / (n_x * n_y * n_z)).array().floor();
+    VecD x = ((idx - s * n_x * n_y * n_z) / n_y).array().floor();
+    VecD y = ((idx - s * n_x * n_y * n_z - x * n_y * n_z) / n_z).array();
+    VecD z = ((idx - s * n_x * n_y * n_z - x * n_y * n_z - y * n_z)).array();
+
+    // ignore spin s for average
+    double avg_x = (probs.array() * x.array()).sum();
+    double avg_y = (probs.array() * y.array()).sum();
+    double avg_z = (probs.array() * z.array()).sum();
+    return {avg_x, avg_y, avg_z};
+}
+
 Eigen::VectorXi expand(int idx,
                        const std::array<int,5>& size_list) {
     int np = size_list[0];
@@ -187,7 +205,7 @@ std::vector<std::tuple<int, int, double>> build_L(
 std::pair<StateCarry, void*> step(const StateCarry& carry,
                                   MatrixXc& expH,
                                   MatrixXc& Wt) {
-    auto [psi, scatter_count, ii, step_count, per_log_step, nx, nz, Lt, G_tot, n_x, n_z, dt, rng] = carry;
+    auto [psi, scatter_count, ii, step_count, per_log_step, nx, ny, nz, Lt, G_tot, n_x, n_y, n_z, is_2d_sim, dt, rng] = carry;
 
     // Non-stochastic evolution using Magnus expansion
     psi = expH * psi;
@@ -223,15 +241,23 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
 
     // Record observable
     if (step_count % per_log_step == 0) {
-        auto [nxi, nzi] = compute_avg_x_z(psi, n_x, n_z);
-        nx(ii) = nxi;
-        nz(ii) = nzi;
+        if (is_2d_sim) {
+            auto [nxi, nzi] = compute_avg_x_z(psi, n_x, n_z);
+            nx(ii) = nxi;
+            ny(ii) = nxi;
+            nz(ii) = nzi;
+        } else {
+            auto [nxi, nyi, nzi] = compute_avg_x_y_z(psi, n_x, n_y, n_z);
+            nx(ii) = nxi;
+            ny(ii) = nyi;
+            nz(ii) = nzi;
+        }
         ii += 1;
     }
     step_count += 1;
 
-    StateCarry new_state = std::make_tuple(psi, scatter_count, ii, step_count, per_log_step, nx, nz,
-                                           Lt, G_tot, n_x, n_z, dt, std::move(rng));
+    StateCarry new_state = std::make_tuple(psi, scatter_count, ii, step_count, per_log_step, nx, ny, nz,
+                                           Lt, G_tot, n_x, n_y, n_z, is_2d_sim, dt, std::move(rng));
     return {new_state, nullptr};
 }
 
@@ -246,11 +272,12 @@ std::pair<StateCarry, void*> step(const StateCarry& carry,
  * @param W Auxilary matirx
  * @param Lt Relaxation operator
  * @param G_tot Total scattering rate
- * @param n_x, n_z Number of motional state
+ * @param n_x, n_y, n_z Number of motional state
+ * @param is_2d_sim Is the simulation 2-D
  * @param num_keys Number of consumer threads & loops per thread
  * @param low_pass_threshold Threshold to filter high-frequency components in Hamiltonian and W terms.
  */
-std::tuple<VectorXc,double,VecD,VecD>
+std::tuple<VectorXc,double,VecD,VecD,VecD>
 solve(const double time_step,
       const long long num_steps,
       const long long per_log_step,
@@ -259,7 +286,8 @@ solve(const double time_step,
       const SpectrumMatrix& W,
       const std::vector<std::tuple<int, int, double>>& Lt,
       const double G_tot,
-      int n_x, int n_z,
+      int n_x, int n_y, int n_z,
+      bool is_2d_sim,
       int num_keys,
       double low_pass_threshold)
 {
@@ -375,6 +403,7 @@ solve(const double time_step,
         std::mt19937 rng(seed);
         size_t num_log = (num_steps - 1) / per_log_step + 1;
         VecD nx = VecD::Zero(num_log);
+        VecD ny = VecD::Zero(num_log);
         VecD nz = VecD::Zero(num_log);
         StateCarry init_state = std::make_tuple(
             psi0,
@@ -383,10 +412,12 @@ solve(const double time_step,
             0, // step_count
             per_log_step,
             nx,
+            ny,
             nz,
             Lt,
             G_tot,
-            n_x, n_z,
+            n_x, n_y, n_z,
+            is_2d_sim,
             time_step,
             rng
         );
@@ -408,17 +439,20 @@ solve(const double time_step,
     
     // Rearrange collected results
     std::vector<VecD> all_nx;
+    std::vector<VecD> all_ny;
     std::vector<VecD> all_nz;
     size_t num_log = (num_steps - 1) / per_log_step + 1;
     VecD avg_nx = VecD::Zero(num_log);
+    VecD avg_ny = VecD::Zero(num_log);
     VecD avg_nz = VecD::Zero(num_log);
     std::vector<int> all_jumps;
     std::vector<VectorXc> all_final_psis;
     for (auto& final_state: final_states) {
-        auto& [psi, scatter_count, ii, step_count, per_log_step, nx, nz, Lt, G_tot, n_x, n_z, dt, rng] = final_state;
+        auto& [psi, scatter_count, ii, step_count, per_log_step, nx, ny, nz, Lt, G_tot, n_x, n_y, n_z, is2dsim, dt, rng] = final_state;
         all_final_psis.push_back(psi);
         all_jumps.push_back(scatter_count);
         all_nx.push_back(nx);
+        all_ny.push_back(ny);
         all_nz.push_back(nz);
     }
 
@@ -426,9 +460,11 @@ solve(const double time_step,
     for (int i = 0; i < num_log; ++i) {
         for (int k = 0; k < all_nx.size(); ++k) {
             avg_nx(i) += all_nx[k](i);
+            avg_ny(i) += all_ny[k](i);
             avg_nz(i) += all_nz[k](i);
         }
         avg_nx(i) /= static_cast<double>(all_nx.size());
+        avg_ny(i) /= static_cast<double>(all_ny.size());
         avg_nz(i) /= static_cast<double>(all_nz.size());
     }
 
@@ -437,7 +473,7 @@ solve(const double time_step,
                        static_cast<double>(all_jumps.size());
 
     // Return final psi of last run (just like in Python)
-    return {all_final_psis.back(), avg_jumps, avg_nx, avg_nz};
+    return {all_final_psis.back(), avg_jumps, avg_nx, avg_ny, avg_nz};
 }
 
 } // namespace ss_spin
