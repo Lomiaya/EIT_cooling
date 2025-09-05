@@ -93,8 +93,8 @@ std::tuple<double,double,double> compute_avg_x_y_z(const VectorXc& psi, int n_x,
 
     // compute 3D indices: s, x, z from linear index
     VecD s = (idx / (n_x * n_y * n_z)).array().floor();
-    VecD x = ((idx - s * n_x * n_y * n_z) / n_y).array().floor();
-    VecD y = ((idx - s * n_x * n_y * n_z - x * n_y * n_z) / n_z).array();
+    VecD x = ((idx - s * n_x * n_y * n_z) / (n_y * n_z)).array().floor();
+    VecD y = ((idx - s * n_x * n_y * n_z - x * n_y * n_z) / n_z).array().floor();
     VecD z = ((idx - s * n_x * n_y * n_z - x * n_y * n_z - y * n_z)).array();
 
     // ignore spin s for average
