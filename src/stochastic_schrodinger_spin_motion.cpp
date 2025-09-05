@@ -295,7 +295,7 @@ solve(const double time_step,
     const size_t M = 32;   // Number of producer threads
     const size_t stash_capacity = 100;   // Stash capacity
 
-    std::queue<std::tuple<MatrixXc, size_t, size_t>> stash;
+    std::queue<std::tuple<MatrixXc, MatrixXc, size_t, size_t>> stash;
     std::mutex mtx;
     std::condition_variable cv_produce;
     std::condition_variable cv_consume;
@@ -327,9 +327,10 @@ solve(const double time_step,
                 double time1 = time0 + time_step;
                 // MatrixXc d = magnus2_analytic(H_eff, time0, time1);
                 MatrixXc d = brute_force(H_eff, time0, time1, 1);
+                MatrixXc w = evaluate(W, time0);
                 std::unique_lock<std::mutex> lock(mtx);
                 cv_produce.wait(lock, [&]() { return idx == next_expected_idx && stash.size() < stash_capacity; });
-                stash.emplace(d, 0, idx);  // stash maintains insertion order
+                stash.emplace(d, w, 0, idx);  // stash maintains insertion order
                 ++next_expected_idx;
                 lock.unlock();
 
@@ -351,9 +352,9 @@ solve(const double time_step,
             for (size_t i = 0; i < total; ++i) {
                 {
                     std::unique_lock<std::mutex> lock(mtx);
-                    cv_consume.wait(lock, [&]() { return !stash.empty() && std::get<2>(stash.front()) == i; });
+                    cv_consume.wait(lock, [&]() { return !stash.empty() && std::get<3>(stash.front()) == i; });
 
-                    auto& [d, count, idx] = stash.front();
+                    auto& [d, w, count, idx] = stash.front();
 
                     // std::cout << "Consumed element " << idx << ", " << i << " by consumer "
                     //         << std::this_thread::get_id() << std::endl;
@@ -361,21 +362,20 @@ solve(const double time_step,
                     lock.unlock();
 
                     // Process the data
-                    MatrixXc w = evaluate(W, time_step * i);
                     state = step(state, d, w).first; // actively process data since d might be freed after stash.pop().
                 }
 
                 {
                     std::unique_lock<std::mutex> lock(mtx);
-                    cv_consume.wait(lock, [&]() { return !stash.empty() && std::get<2>(stash.front()) == i; });
+                    cv_consume.wait(lock, [&]() { return !stash.empty() && std::get<3>(stash.front()) == i; });
 
-                    auto& [d, count, idx] = stash.front();
+                    auto& [d, w, count, idx] = stash.front();
                     ++count;
 
                     if (count == N) {
                         stash.pop();
                         lock.unlock();
-                        cv_produce.notify_one();
+                        cv_produce.notify_all(); // Need to be all on some hardware.
                         cv_consume.notify_all();
                     } else {
                         lock.unlock(); // Don't notify producer yet
