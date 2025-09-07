@@ -2,6 +2,7 @@
 #define HAMILTONIAN_HPP
 
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <complex>
 #include <vector>
@@ -15,7 +16,8 @@ namespace hamiltonian {
 using namespace Eigen;
 using namespace std;
 using namespace define_params;
-using SpectrumMatrix = std::vector<std::pair<ComplexMat, double>>;
+using SparseMat = SparseMatrix<complex<double>>;
+using SpectrumMatrix = std::vector<std::pair<SparseMat, double>>;
 
 tuple<int, int, int> from_number_to_tuple(int n, int n_x_max, int n_z_max);
 tuple<int, int, int, int> from_number_to_tuple(int n, int n_x_max, int n_y_max, int n_z_max);
@@ -29,10 +31,10 @@ SpectrumMatrix multiply(const SpectrumMatrix& A,
 SpectrumMatrix multiply(const SpectrumMatrix& A,
                         const SpectrumMatrix& B,
                         double threshold);
-SpectrumMatrix multiply(const ComplexMat& A,
+SpectrumMatrix multiply(const SparseMat& A,
                         const SpectrumMatrix& B);
 SpectrumMatrix multiply(const SpectrumMatrix& A,
-                        const ComplexMat& B);
+                        const SparseMat& B);
 SpectrumMatrix multiply(double c, const SpectrumMatrix& A);
 SpectrumMatrix multiply(Complex c, const SpectrumMatrix& A);
 SpectrumMatrix adjoint(const SpectrumMatrix& A);

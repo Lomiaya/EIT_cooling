@@ -3,6 +3,7 @@
 #define STOCHASTIC_SCHRODINGER_SPIN_MOTION_HPP
 
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <vector>
 #include <tuple>
@@ -17,7 +18,7 @@ using MatrixXc = Eigen::MatrixXcd;
 using VectorXc = Eigen::VectorXcd;
 using VecD = Eigen::VectorXd;
 
-MatrixXc brute_force(const std::vector<std::pair<MatrixXc,double>>& Hi_omegas,
+MatrixXc brute_force(const SpectrumMatrix& Hi_omegas,
                      double t0, double t1,
                      int n_steps = 1000);
 

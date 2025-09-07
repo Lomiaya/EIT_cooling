@@ -114,7 +114,7 @@ SpectrumMatrix multiply(const SpectrumMatrix& A,
     }
     return result;
 }
-SpectrumMatrix multiply(const ComplexMat& A,
+SpectrumMatrix multiply(const SparseMat& A,
                         const SpectrumMatrix& B)
 {
     SpectrumMatrix result;
@@ -124,7 +124,7 @@ SpectrumMatrix multiply(const ComplexMat& A,
     return result;
 }
 SpectrumMatrix multiply(const SpectrumMatrix& A,
-                        const ComplexMat& B)
+                        const SparseMat& B)
 {
     SpectrumMatrix result;
     for (const auto& [A_mat, A_freq] : A) {
@@ -217,7 +217,7 @@ SpectrumMatrix define_V_plus_2d(const States& states,
     int size_excited = states.n_excited_states * params.n_x_max * params.n_z_max;
     Vector3d wavevector = params.k.row(f) * 2.0 * parameters::pi / states.transition_lambda;
     double sat_param = sqrt(params.I(I_index, f) / (2.0 * Isat));
-    MatrixXcd V_plus = MatrixXcd::Zero(size_excited, size_ground);
+    SparseMat V_plus = SparseMat(size_excited, size_ground);
 
     for (int i = 0; i < size_excited; ++i) {
         auto [e, xi, zi] = from_number_to_tuple(i, params.n_x_max, params.n_z_max);
@@ -239,7 +239,7 @@ SpectrumMatrix define_V_plus_2d(const States& states,
             ov = conj(ov);
             contrib += Gijk * sat_param * params.s.row(f)[pol_dir] * ov;
         }
-        V_plus(i, l) = contrib / Complex(2, 0);
+        V_plus.coeffRef(i, l) = contrib / Complex(2, 0);
     }
     double freq = - H_ground_diag(l) - params.D(D_index, f); // blue detuning
     return {{V_plus, freq}};
@@ -258,7 +258,7 @@ SpectrumMatrix define_V_plus_3d(const States& states,
     int size_excited = states.n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max;
     Vector3d wavevector = params.k.row(f) * 2.0 * parameters::pi / states.transition_lambda;
     double sat_param = sqrt(params.I(I_index, f) / (2.0 * Isat));
-    MatrixXcd V_plus = MatrixXcd::Zero(size_excited, size_ground);
+    SparseMat V_plus = SparseMat(size_excited, size_ground);
 
     for (int i = 0; i < size_excited; ++i) {
         auto [e, xi, yi, zi] = from_number_to_tuple(i, params.n_x_max, params.n_y_max, params.n_z_max);
@@ -280,7 +280,7 @@ SpectrumMatrix define_V_plus_3d(const States& states,
             ov = conj(ov);
             contrib += Gijk * sat_param * params.s.row(f)[pol_dir] * ov;
         }
-        V_plus(i, l) = contrib / Complex(2, 0);
+        V_plus.coeffRef(i, l) = contrib / Complex(2, 0);
     }
     double freq = - H_ground_diag(l) - params.D(D_index, f); // blue detuning
     return {{V_plus, freq}};
@@ -317,7 +317,7 @@ SpectrumMatrix define_V_minus_2d(const States& states,
     
     for (int i = 0; i < size_ground; ++i) {
         auto [g, xi, zi] = from_number_to_tuple(i, params.n_x_max, params.n_z_max);
-        MatrixXcd V_minus_this = MatrixXcd::Zero(size_ground, size_excited);
+        SparseMat V_minus_this = SparseMat(size_ground, size_excited);
         for (int j = 0; j < size_excited; ++j) {
             auto [e, xj, zj] = from_number_to_tuple(j, params.n_x_max, params.n_z_max);
             complex<double> contrib = 0.0;
@@ -336,7 +336,7 @@ SpectrumMatrix define_V_minus_2d(const States& states,
                 );
                 contrib += Gijk * sat_param * params.s.row(f)[pol_dir] * ov;
             }
-            V_minus_this(i, j) = contrib / Complex(2, 0);
+            V_minus_this.coeffRef(i, j) = contrib / Complex(2, 0);
         }
         double freq = params.D(D_index, f) + H_ground_diag(i); // blue detuning
         V_minus.push_back({V_minus_this, freq});
@@ -360,7 +360,7 @@ SpectrumMatrix define_V_minus_3d(const States& states,
     
     for (int i = 0; i < size_ground; ++i) {
         auto [g, xi, yi, zi] = from_number_to_tuple(i, params.n_x_max, params.n_y_max, params.n_z_max);
-        MatrixXcd V_minus_this = MatrixXcd::Zero(size_ground, size_excited);
+        SparseMat V_minus_this = SparseMat(size_ground, size_excited);
         for (int j = 0; j < size_excited; ++j) {
             auto [e, xj, yj, zj] = from_number_to_tuple(j, params.n_x_max, params.n_y_max, params.n_z_max);
             complex<double> contrib = 0.0;
@@ -379,7 +379,7 @@ SpectrumMatrix define_V_minus_3d(const States& states,
                 );
                 contrib += Gijk * sat_param * params.s.row(f)[pol_dir] * ov;
             }
-            V_minus_this(i, j) = contrib / Complex(2, 0);
+            V_minus_this.coeffRef(i, j) = contrib / Complex(2, 0);
         }
         double freq = params.D(D_index, f) + H_ground_diag(i); // blue detuning
         V_minus.push_back({V_minus_this, freq});
@@ -432,10 +432,10 @@ SpectrumMatrix build_W_2d(const States& states,
     for (int f = 0; f < params.n_beams; ++f) {
         for (int l = 0; l < n_ground_states * params.n_x_max * params.n_z_max; ++l) {
             SpectrumMatrix V_plus_fl = define_V_plus(states, params, f, l, I_index, D_index, H_ground_diag);
-            ComplexMat H_NH = ComplexMat::Zero(n_excited_states * params.n_x_max * params.n_z_max,
-                                               n_excited_states * params.n_x_max * params.n_z_max);
+            SparseMat H_NH = SparseMat(n_excited_states * params.n_x_max * params.n_z_max,
+                                       n_excited_states * params.n_x_max * params.n_z_max);
             for (int e = 0; e < n_excited_states * params.n_x_max * params.n_z_max; ++e) {
-                    H_NH(e, e) = Complex(1,0) / (H_excited_diag(e) - Complex(0, 0.5 * states.G_tot) -
+                    H_NH.coeffRef(e, e) = Complex(1,0) / (H_excited_diag(e) - Complex(0, 0.5 * states.G_tot) -
                                                  H_ground_diag(l) - params.D(D_index, f)); // blue detuning
             }
             W = addition(W, multiply(H_NH, V_plus_fl));
@@ -456,10 +456,10 @@ SpectrumMatrix build_W_3d(const States& states,
     for (int f = 0; f < params.n_beams; ++f) {
         for (int l = 0; l < n_ground_states * params.n_x_max * params.n_y_max * params.n_z_max; ++l) {
             SpectrumMatrix V_plus_fl = define_V_plus(states, params, f, l, I_index, D_index, H_ground_diag);
-            ComplexMat H_NH = ComplexMat::Zero(n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max,
-                                               n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max);
+            SparseMat H_NH = SparseMat(n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max,
+                                       n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max);
             for (int e = 0; e < n_excited_states * params.n_x_max * params.n_y_max * params.n_z_max; ++e) {
-                    H_NH(e, e) = Complex(1,0) / (H_excited_diag(e) - Complex(0, 0.5 * states.G_tot) -
+                    H_NH.coeffRef(e, e) = Complex(1,0) / (H_excited_diag(e) - Complex(0, 0.5 * states.G_tot) -
                                                  H_ground_diag(l) - params.D(D_index, f)); // blue detuning
             }
             W = addition(W, multiply(H_NH, V_plus_fl));

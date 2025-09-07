@@ -22,7 +22,7 @@ namespace ss_spin {
 /**
  * @brief Calculate evolution matrix
  */
-MatrixXc brute_force(const std::vector<std::pair<MatrixXc,double>>& Hi_omegas,
+MatrixXc brute_force(const SpectrumMatrix& Hi_omegas,
                      double t0, double t1,
                      int n_steps) {
     double dt = (t1 - t0) / n_steps;
