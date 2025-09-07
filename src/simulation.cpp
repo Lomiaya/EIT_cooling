@@ -138,13 +138,13 @@ std::tuple<MatrixXd, MatrixXd, MatrixXd, MatrixXd> simulate(const Params& params
             // }
 
             // for (const auto& [H_mat, H_freq] : H) {
-            //     cout << "H: " << H_freq << ", " << H_mat.rows() << ", " << H_mat.cols() 
+            //     cout << "H: " << H_freq << ", " << H_mat.norm()
             //     // << ", " << H_mat << endl
             //     ;
             // }
 
             // for (const auto& [W_mat, W_freq] : W) {
-            //     cout << "W: " << W_freq << ", " << W_mat.rows() << ", " << W_mat.cols() 
+            //     cout << "W: " << W_freq << ", " << W_mat.norm()
             //     // << ", " << W_mat << endl
             //     ;
             // }

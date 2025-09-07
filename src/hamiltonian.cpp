@@ -96,16 +96,18 @@ SpectrumMatrix multiply(const SpectrumMatrix& A,
     for (const auto& [A_mat, A_freq] : A) {
         for (const auto& [B_mat, B_freq] : B) {
             if (std::abs(A_freq + B_freq) < threshold) {
+                auto res_mat_temp = A_mat * B_mat;
+                if (res_mat_temp.norm() < 1) continue; // I will find a better way to add this...
                 bool found = false;
                 for (auto& [res_mat, res_freq] : result) {
                     if (std::abs(B_freq + A_freq - res_freq) < 1) {
-                        res_mat += A_mat * B_mat;
+                        res_mat += res_mat_temp;
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    result.emplace_back(A_mat * B_mat, A_freq + B_freq);
+                    result.emplace_back(res_mat_temp, A_freq + B_freq);
                 }
             }
         }
@@ -639,16 +641,18 @@ SpectrumMatrix build_H(const States& states,
                        SpectrumMatrix& W,
                        double threshold)
 {
-    // H_eff = - V_minus * W. Memory-inefficient, but it works so I don't care.
+    // H_eff = - V_minus * W.
     DoubleVec H_ground_diag;
     if (params.do_2d_sim)
         H_ground_diag = define_partition_hamiltonian(states.H_ground, states.H_ground_stark, params.n_x_max, params.n_z_max, params);
     else
         H_ground_diag = define_partition_hamiltonian(states.H_ground, states.H_ground_stark, params.n_x_max, params.n_y_max, params.n_z_max, params);
     SpectrumMatrix V_minus_total = V_minus(states, params, I_index, D_index, H_ground_diag);
-    SpectrumMatrix V_minus_W = multiply(V_minus_total, W, threshold);
-    // SpectrumMatrix H_eff = multiply(-0.5, (addition(V_minus_W, adjoint(V_minus_W))));
-    SpectrumMatrix H_eff = multiply(-1, V_minus_W);
+    // SpectrumMatrix V_minus_W = multiply(V_minus_total, W, threshold);
+    // // SpectrumMatrix H_eff = multiply(-0.5, (addition(V_minus_W, adjoint(V_minus_W))));
+    // SpectrumMatrix H_eff = multiply(-1, V_minus_W);
+    V_minus_total = multiply(-1, V_minus_total);
+    SpectrumMatrix H_eff = multiply(V_minus_total, W, threshold);
     return H_eff;
 }
 } // namespace hamiltonian
