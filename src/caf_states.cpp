@@ -178,7 +178,7 @@ Params create_params(const States& states) {
 
     DoubleVec D2s(size_D);
     for (int i = 0; i < size_D; ++i) {
-        double delta = (- static_cast<double>(i) + 2.0) / 5.0 * 100e3;
+        double delta = (- static_cast<double>(i) + 0.0) / 5.0 * 100e3;
         double val = 2.0 * parameters::pi * delta + gamma * 2.0 - energies[0]; // 4gamma detuning from F=1-
         D2s[i] = val;
     }
@@ -192,7 +192,7 @@ Params create_params(const States& states) {
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 60.0, 30.0, 600.0;
+    params.I << 20.0, 10.0, 600.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
@@ -203,16 +203,16 @@ Params create_params(const States& states) {
     params.k << 0.707, 0.0, 0.707,  0.0, 1.0, 0.0,  1.0, 0.0, 0.0;
 
     params.omega_x = 2 * parameters::pi * 100e3;
-    params.omega_y = 2 * parameters::pi * 100e3;
+    params.omega_y = 2 * parameters::pi * 106e3;
     params.omega_z = 2 * parameters::pi * 15e3;
 
     params.n_x_max = 5;
     params.n_y_max = 5;
-    params.n_z_max = 15;
+    params.n_z_max = 31;
 
     params.n_x_init = 2;
     params.n_y_init = 2;
-    params.n_z_init = 7;
+    params.n_z_init = 15;
 
     params.do_2d_sim = false;
 
