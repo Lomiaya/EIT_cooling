@@ -192,7 +192,7 @@ Params create_params(const States& states) {
 
     // Intensities
     params.I = DoubleMat(1,params.n_beams);
-    params.I << 20.0, 10.0, 600.0;
+    params.I << 40.0, 10.0, 600.0;
 
     // Polarizations
     params.s = ComplexMat(params.n_beams,3);
