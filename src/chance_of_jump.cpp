@@ -111,8 +111,7 @@ Complex calculate_overlap_from_k(
     const std::array<int, 3>& start,
     const std::array<int, 3>& end)
 {
-    // reduced Planck constant, from your constants.hpp or just hardcode here
-    constexpr double hbar = 1.054571817e-34;
+    double hbar = parameters::reduced_plancks_constant;
 
     double x0 = std::sqrt(hbar / (mass * omega_x));
     double y0 = std::sqrt(hbar / (mass * omega_y));
