@@ -175,9 +175,9 @@ SpectrumMatrix addition(const SpectrumMatrix& A,
     }
     return result;
 }
-ComplexMat evaluate(const SpectrumMatrix& A, double t)
+SparseMat evaluate(const SpectrumMatrix& A, double t)
 {
-    ComplexMat result = ComplexMat::Zero(A[0].first.rows(), A[0].first.cols());
+    SparseMat result = SparseMat(A[0].first.rows(), A[0].first.cols());
     for (const auto& [A_mat, A_freq] : A) {
         result += A_mat * std::exp(Complex(0, A_freq * t));
     }

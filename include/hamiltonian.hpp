@@ -41,7 +41,7 @@ SpectrumMatrix adjoint(const SpectrumMatrix& A);
 SpectrumMatrix addition(const SpectrumMatrix& A,
                         const SpectrumMatrix& B);
 SpectrumMatrix cleanup(const SpectrumMatrix& A);
-ComplexMat evaluate(const SpectrumMatrix& A, double t);
+SparseMat evaluate(const SpectrumMatrix& A, double t);
 SpectrumMatrix low_pass_filter(const SpectrumMatrix& A, double threshold);
 // Defines V_+(f,l) matrix, of shape n'_excited_states x n'_ground_states
 SpectrumMatrix define_V_plus(const States& states,

@@ -22,52 +22,53 @@ namespace ss_spin {
 /**
  * @brief Calculate evolution matrix
  */
-MatrixXc brute_force(const SpectrumMatrix& Hi_omegas,
+SparseMat brute_force(const SpectrumMatrix& Hi_omegas,
                      double t0, double t1,
                      int n_steps) {
     double dt = (t1 - t0) / n_steps;
     int d = Hi_omegas[0].first.rows();
-    MatrixXc U = MatrixXc::Identity(d,d);
+    SparseMat U = SparseMat(d,d);
+    U.setIdentity();
+    SparseMat Id = U; // ??? deep copy ???
     for(int k=0; k<n_steps; ++k) {
         double t = t0 + k*dt;
-        MatrixXc drive = MatrixXc::Zero(d,d);
+        SparseMat drive = SparseMat(d,d);
         for(auto& p: Hi_omegas) drive += p.first * std::exp(Complex(0,1)*p.second*t);
-        MatrixXc H_eff = drive;
-        U = (MatrixXc::Identity(d,d) - Complex(0,1)*H_eff*dt) * U;
+        U = (Id - Complex(0,1)*drive*dt) * U;
     }
     return U;
 }
 
-MatrixXc magnus2_analytic(const SpectrumMatrix& Hi_omegas,
-                          double t0, double t1) {
-    auto K = [&](double w){
-        if(std::abs(w) < 1e-12) return Complex(0,1)*(t0-t1);
-        return (std::exp(Complex(0,1)*w*t0) - std::exp(Complex(0,1)*w*t1))/w;
-    };
-    MatrixXc Omega1 = -Complex(0,1)*(MatrixXc::Zero(Hi_omegas[0].first.rows(),Hi_omegas[0].first.cols()));
-    for(auto& p: Hi_omegas) Omega1 += p.first * K(p.second);
-    // Omega2
-    MatrixXc Omega2 = -Complex(0,1)*(MatrixXc::Zero(Hi_omegas[0].first.rows(),Hi_omegas[0].first.cols()));
-    // I integral
-    auto Iij = [&](double w_i,double w_j){
-        if(std::abs(w_i)<1e-12 && std::abs(w_j)<1e-12) return Complex(1,0)*0.5*(t1-t0)*(t1-t0);
-        if(std::abs(w_j)<1e-12) return std::exp(Complex(0,1)*w_i*t1)*(Complex(1,0)/(w_i*w_i)+(t1-t0)/(Complex(0,1)*w_i))
-                                        - std::exp(Complex(0,1)*w_i*t0)*(Complex(1,0)/(w_i*w_i));
-        if(std::abs(w_i)<1e-12) return (std::exp(Complex(0,1)*(w_i+w_j)*t1)-std::exp(Complex(0,1)*(w_i+w_j)*t0))/(-w_j*(w_i+w_j)) 
-                                        - std::exp(Complex(0,1)*w_j*t0)*(t1-t0)/(Complex(0,1)*w_j);
-        if(std::abs(w_i+w_j)<1e-12) return ((t1-t0))/(Complex(0,1)*w_j)
-                                            - std::exp(Complex(0,1)*w_j*t0)*(std::exp(Complex(0,1)*w_i*t1)-std::exp(Complex(0,1)*w_i*t0))/(-w_i*w_j);
-        return (std::exp(Complex(0,1)*(w_i+w_j)*t1)-std::exp(Complex(0,1)*(w_i+w_j)*t0))/(-w_j*(w_i+w_j))
-                - std::exp(Complex(0,1)*w_j*t0)*(std::exp(Complex(0,1)*w_i*t1)-std::exp(Complex(0,1)*w_i*t0))/(-w_i*w_j);
-    };
-    // drive-drive
-    for(auto& pi: Hi_omegas) for(auto& pj: Hi_omegas) {
-        double wi=pi.second, wj=pj.second;
-        Omega2 += -0.5*(pi.first*pj.first - pj.first*pi.first)*Iij(pi.second,pj.second);
-    }
-    MatrixXc Omega = Omega1 + Omega2;
-    return Omega.exp();
-}
+// MatrixXc magnus2_analytic(const SpectrumMatrix& Hi_omegas,
+//                           double t0, double t1) {
+//     auto K = [&](double w){
+//         if(std::abs(w) < 1e-12) return Complex(0,1)*(t0-t1);
+//         return (std::exp(Complex(0,1)*w*t0) - std::exp(Complex(0,1)*w*t1))/w;
+//     };
+//     MatrixXc Omega1 = -Complex(0,1)*(MatrixXc::Zero(Hi_omegas[0].first.rows(),Hi_omegas[0].first.cols()));
+//     for(auto& p: Hi_omegas) Omega1 += p.first * K(p.second);
+//     // Omega2
+//     MatrixXc Omega2 = -Complex(0,1)*(MatrixXc::Zero(Hi_omegas[0].first.rows(),Hi_omegas[0].first.cols()));
+//     // I integral
+//     auto Iij = [&](double w_i,double w_j){
+//         if(std::abs(w_i)<1e-12 && std::abs(w_j)<1e-12) return Complex(1,0)*0.5*(t1-t0)*(t1-t0);
+//         if(std::abs(w_j)<1e-12) return std::exp(Complex(0,1)*w_i*t1)*(Complex(1,0)/(w_i*w_i)+(t1-t0)/(Complex(0,1)*w_i))
+//                                         - std::exp(Complex(0,1)*w_i*t0)*(Complex(1,0)/(w_i*w_i));
+//         if(std::abs(w_i)<1e-12) return (std::exp(Complex(0,1)*(w_i+w_j)*t1)-std::exp(Complex(0,1)*(w_i+w_j)*t0))/(-w_j*(w_i+w_j)) 
+//                                         - std::exp(Complex(0,1)*w_j*t0)*(t1-t0)/(Complex(0,1)*w_j);
+//         if(std::abs(w_i+w_j)<1e-12) return ((t1-t0))/(Complex(0,1)*w_j)
+//                                             - std::exp(Complex(0,1)*w_j*t0)*(std::exp(Complex(0,1)*w_i*t1)-std::exp(Complex(0,1)*w_i*t0))/(-w_i*w_j);
+//         return (std::exp(Complex(0,1)*(w_i+w_j)*t1)-std::exp(Complex(0,1)*(w_i+w_j)*t0))/(-w_j*(w_i+w_j))
+//                 - std::exp(Complex(0,1)*w_j*t0)*(std::exp(Complex(0,1)*w_i*t1)-std::exp(Complex(0,1)*w_i*t0))/(-w_i*w_j);
+//     };
+//     // drive-drive
+//     for(auto& pi: Hi_omegas) for(auto& pj: Hi_omegas) {
+//         double wi=pi.second, wj=pj.second;
+//         Omega2 += -0.5*(pi.first*pj.first - pj.first*pi.first)*Iij(pi.second,pj.second);
+//     }
+//     MatrixXc Omega = Omega1 + Omega2;
+//     return Omega.exp();
+// }
 
 std::pair<double,double> compute_avg_x_z(const VectorXc& psi,
                                          int n_x, int n_z) {
@@ -203,8 +204,8 @@ std::vector<std::tuple<int, int, double>> build_L(
 
 // Kernel function that consumes Data
 std::pair<StateCarry, void*> step(const StateCarry& carry,
-                                  MatrixXc& expH,
-                                  MatrixXc& Wt) {
+                                  SparseMat& expH,
+                                  SparseMat& Wt) {
     auto [psi, scatter_count, ii, step_count, per_log_step, nx, ny, nz, Lt, G_tot, n_x, n_y, n_z, is_2d_sim, dt, rng] = carry;
 
     // Non-stochastic evolution using Magnus expansion
@@ -295,7 +296,7 @@ solve(const double time_step,
     const size_t M = 32;   // Number of producer threads
     const size_t stash_capacity = 100;   // Stash capacity
 
-    std::queue<std::tuple<MatrixXc, MatrixXc, size_t, size_t>> stash;
+    std::queue<std::tuple<SparseMat, SparseMat, size_t, size_t>> stash;
     std::mutex mtx;
     std::condition_variable cv_produce;
     std::condition_variable cv_consume;
@@ -320,8 +321,8 @@ solve(const double time_step,
                 double time0 = time_step * idx;
                 double time1 = time0 + time_step;
                 // MatrixXc d = magnus2_analytic(H_eff, time0, time1);
-                MatrixXc d = brute_force(H_eff, time0, time1, 1);
-                MatrixXc w = evaluate(W, time0);
+                SparseMat d = brute_force(H_eff, time0, time1, 1);
+                SparseMat w = evaluate(W, time0);
                 std::unique_lock<std::mutex> lock(mtx);
                 cv_produce.wait(lock, [&]() { return idx == next_expected_idx && stash.size() < stash_capacity; });
                 stash.emplace(d, w, 0, idx);  // stash maintains insertion order

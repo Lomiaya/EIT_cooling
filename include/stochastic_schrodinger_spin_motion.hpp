@@ -16,15 +16,16 @@ using namespace hamiltonian;
 using Complex = std::complex<double>;
 using MatrixXc = Eigen::MatrixXcd;
 using VectorXc = Eigen::VectorXcd;
+using SparseMat = SparseMatrix<complex<double>>;
 using VecD = Eigen::VectorXd;
 
-MatrixXc brute_force(const SpectrumMatrix& Hi_omegas,
+SparseMat brute_force(const SpectrumMatrix& Hi_omegas,
                      double t0, double t1,
                      int n_steps = 1000);
 
-// Magnus second‐order analytic integrator
-MatrixXc magnus2_analytic(const SpectrumMatrix& Hi_omegas,
-                          double t0, double t1);
+// // Magnus second‐order analytic integrator
+// MatrixXc magnus2_analytic(const SpectrumMatrix& Hi_omegas,
+//                           double t0, double t1);
 
 // compute average x and z coordinates
 std::pair<double,double> compute_avg_x_z(const VectorXc& psi,
@@ -38,8 +39,8 @@ using StateCarry = std::tuple<VectorXc,int,long long,long long,long long,VecD,Ve
                               int, int, int, bool, // sizes: n_x,n_y,n_z; is_2d_sim
                               double, std::mt19937>; // dt, rng seed
 std::pair<StateCarry, void*> step(const StateCarry& carry,
-                                  const MatrixXc& expH,
-                                  const MatrixXc& Wt);
+                                  const SparseMat& expH,
+                                  const SparseMat& Wt);
 
 // Full solve: returns (final psi, mean jumps, avg_x, avg_z)
 std::tuple<VectorXc,double,VecD,VecD,VecD>
